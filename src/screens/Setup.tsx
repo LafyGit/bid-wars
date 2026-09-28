@@ -1,5 +1,5 @@
-import React from 'react';
-import { KeyboardAvoidingView, Platform, TextInput, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Keyboard, KeyboardAvoidingView, Platform, TextInput, View } from 'react-native';
 import { useGame } from '../store/GameContext';
 import { colors, fonts, playerColor } from '../theme/tokens';
 import { CTA, TextLink } from '../ui/Btn';
@@ -34,14 +34,27 @@ function NameCard({ p }: { p: Player }) {
   );
 }
 
+/** True while the software keyboard is on screen. */
+function useKeyboardUp() {
+  const [up, setUp] = useState(false);
+  useEffect(() => {
+    const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setUp(true));
+    const hide = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setUp(false));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
+  return up;
+}
+
 export function Setup() {
   const g = useGame();
+  const keyboardUp = useKeyboardUp();
   return (
     <Screen>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <TextLink label="← BACK" onPress={() => g.go('home')} />
-        <Display size={40} style={{ marginTop: 14 }}>{'WHO’S\nPLAYING?'}</Display>
-        <View style={{ flex: 1, justifyContent: 'center' }}>
+        {/* The title steps aside while the keyboard is up; otherwise the cards would slide over it. */}
+        {!keyboardUp && <Display size={40} style={{ marginTop: 14 }}>{'WHO’S\nPLAYING?'}</Display>}
+        <View style={{ flex: 1, justifyContent: 'center', paddingTop: 12 }}>
           <NameCard p={0} />
           <Enter kind="pop" delay={160} duration={380} style={{ alignSelf: 'center', marginVertical: -2, zIndex: 2, width: 52, height: 52, borderRadius: 26, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
             <Display size={15} color={colors.ink4} ls={0} lh={1.1}>VS</Display>
