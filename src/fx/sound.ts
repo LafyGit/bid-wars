@@ -1,0 +1,46 @@
+import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
+
+/** Audio event bus. Placeholder low-gain tones in V1; swap the sources for real cues later. */
+export type SoundEvent = 'reveal' | 'lock' | 'countdown_tick' | 'win' | 'tie' | 'final_result' | 'topic_spin_tick' | 'topic_land';
+
+const sources: Record<SoundEvent, number> = {
+  reveal: require('../../assets/sfx/reveal.wav'),
+  lock: require('../../assets/sfx/lock.wav'),
+  countdown_tick: require('../../assets/sfx/tick.wav'),
+  win: require('../../assets/sfx/win.wav'),
+  tie: require('../../assets/sfx/tie.wav'),
+  final_result: require('../../assets/sfx/final.wav'),
+  topic_spin_tick: require('../../assets/sfx/spin.wav'),
+  topic_land: require('../../assets/sfx/land.wav'),
+};
+
+let enabled = true;
+let players: Partial<Record<SoundEvent, AudioPlayer>> = {};
+let ready = false;
+
+export const setSoundEnabled = (on: boolean) => { enabled = on; };
+
+export async function initSound() {
+  if (ready) return;
+  ready = true;
+  try {
+    await setAudioModeAsync({ playsInSilentMode: false, interruptionMode: 'mixWithOthers' });
+    (Object.keys(sources) as SoundEvent[]).forEach((k) => {
+      const p = createAudioPlayer(sources[k]);
+      p.volume = 0.6;
+      players[k] = p;
+    });
+  } catch {
+    // Audio is optional. The game is fully playable silent.
+  }
+}
+
+export function sfx(e: SoundEvent) {
+  if (!enabled) return;
+  const p = players[e];
+  if (!p) return;
+  try {
+    p.seekTo(0);
+    p.play();
+  } catch {}
+}
