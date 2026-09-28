@@ -9,6 +9,7 @@ Build numbers are burned on upload. Bump `expo.ios.buildNumber` in `app.json` be
 - 1.1.0 (2): uploaded 2026-09-28, commit `65a587d`. Open bidding, 3-second rule, 5-item cap, AI judge, topic catalog, green/pink icon.
 - 1.1.1 (3): uploaded 2026-09-28. Sound cues as CAF, reveal title on one line. Diagnostic build for the device crash (still crashed).
 - 1.1.2 (4): uploaded 2026-09-28. Adopts the UIScene lifecycle via `plugins/withSceneLifecycle.js`. Fixes the launch crash on iOS 27 (`EvaluateRuntimeIssueForNoSceneLifecycleAdoption`); verified on the phone with devicectl before upload.
+- 1.2.0 (5): uploaded 2026-09-28. Green/pink player palette, catalog cleanup, 10 new packs.
 
 Steps (mirrors the Footies flow; Xcode account must be signed in):
 
