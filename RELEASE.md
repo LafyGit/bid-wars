@@ -6,6 +6,7 @@ Identifiers
 
 Build numbers are burned on upload. Bump `expo.ios.buildNumber` in `app.json` before every upload.
 - 1.0 (1): uploaded 2026-09-28, commit `8f59424`.
+- 1.1.0 (2): uploaded 2026-09-28, commit `65a587d`. Open bidding, 3-second rule, 5-item cap, AI judge, topic catalog, green/pink icon.
 
 Steps (mirrors the Footies flow; Xcode account must be signed in):
 
