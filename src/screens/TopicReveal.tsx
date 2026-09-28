@@ -14,7 +14,7 @@ export function TopicReveal() {
   const { idx, landed } = g.state.reveal;
   const t = TOPICS[idx] ?? TOPICS[0];
   const title = t.categoryTitle;
-  const size = Math.min(76, Math.floor(340 / (title.length * 0.8)));
+  const size = Math.min(76, Math.floor(330 / (title.length * 0.86)));
   const ring = new Keyframe({ 0: { opacity: 0.9, transform: [{ scale: 0.3 }] }, 100: { opacity: 0, transform: [{ scale: 2.6 }], easing: Easing.out(Easing.ease) } }).duration(700);
   return (
     <Screen>
@@ -22,7 +22,7 @@ export function TopicReveal() {
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <Enter kind="fade"><Mono size={12} color={colors.ink2} ls={0.2}>TONIGHT’S CATEGORY</Mono></Enter>
         <View style={{ marginTop: 22, height: 124, alignItems: 'center', justifyContent: 'center' }}>
-          <Display size={size} ls={-0.04} lh={0.9} align="center" color={landed ? t.accent : colors.ink} accessibilityLiveRegion="polite">{title}</Display>
+          <Display size={size} ls={-0.04} lh={0.9} align="center" color={landed ? t.accent : colors.ink} numberOfLines={1} adjustsFontSizeToFit accessibilityLiveRegion="polite">{title}</Display>
         </View>
         {landed && !g.rm && Platform.OS !== 'web' && (
           <Animated.View pointerEvents="none" entering={ring} style={{ position: 'absolute', width: 260, height: 260 }}>
