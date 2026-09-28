@@ -36,6 +36,14 @@ type Base = TextProps & {
 };
 
 /** Archivo display text. Defaults to the expanded, black, uppercase wordmark style. */
+/**
+ * iOS clips glyphs that rise above the line box, and Archivo's caps reach ~0.75em above the
+ * baseline, which iOS places about 0.2em above the bottom of the line. Anything under this
+ * ratio shaves the top off the first line on a real device (fine on the simulator), so the
+ * requested tightness is clamped here rather than at every call site.
+ */
+const MIN_DISPLAY_LH = 0.98;
+
 export function Display({ size = 40, color = colors.ink, ls = -0.03, lh = 0.92, align, upper = true, tabular, wdth = 125, weight = 900, style, ...rest }: Base & { wdth?: Wdth; weight?: Weight }) {
   return (
     <Text
@@ -45,7 +53,7 @@ export function Display({ size = 40, color = colors.ink, ls = -0.03, lh = 0.92, 
         {
           fontFamily: archivo(wdth, weight),
           fontSize: size,
-          lineHeight: Math.round(size * lh),
+          lineHeight: Math.round(size * Math.max(lh, MIN_DISPLAY_LH)),
           letterSpacing: size * ls,
           color,
           textAlign: align,
