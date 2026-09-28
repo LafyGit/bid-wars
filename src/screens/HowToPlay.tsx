@@ -8,11 +8,11 @@ import { Screen } from '../ui/Screen';
 import { Body, Display } from '../ui/Txt';
 
 const RULES: [string, string][] = [
-  ['$20 each', 'Both players get $20 of fake money for the round.'],
-  ['10 hidden items', 'Items from one topic appear one at a time. Nobody knows what’s next.'],
-  ['Bid in secret', 'Lock your bid privately. Highest bid wins the item and pays for it.'],
-  ['Ties and zeros', 'A tie triggers a tie-break. If you both bid $0, nobody gets it.'],
-  ['You be the judge', 'After ten items, compare collections and decide who won.'],
+  ['$20 each', 'Both players get $20 of fake money for the round. Your balance is always on screen.'],
+  ['10 hidden items', 'Items from one subtopic appear one at a time. Nobody knows what’s next.'],
+  ['Bid back and forth', 'Take turns raising by at least $1. Pass to let the other player have it at their bid.'],
+  ['Max 5 items', 'A full shelf can’t bid. Going once, going twice, sold: turn on the 3-second rule in Settings.'],
+  ['You be the judge', 'After ten items, compare collections. The AI judge weighs in, but you decide.'],
 ];
 
 export function HowToPlay() {

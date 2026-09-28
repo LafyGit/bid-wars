@@ -1,7 +1,10 @@
-import type { Award, LogEntry, Pair, Player, Privacy, RoundResult, RoundState, Session } from './types';
+import type { Award, LogEntry, Pair, Player, RoundResult, RoundState, Session } from './types';
 
 export const BUDGET = 20;
 export const ITEMS = 10;
+/** A player can win at most this many items per round. */
+export const MAX_ITEMS = 5;
+export const MIN_RAISE = 1;
 
 export const newSession = (): Session => ({ rounds: 0, items: [0, 0], spent: [0, 0], biggest: [0, 0], cheapest: [null, null] });
 
@@ -14,15 +17,17 @@ export function shuffle<T>(arr: readonly T[], rand: () => number = Math.random):
   return a;
 }
 
+const other = (p: Player): Player => (p === 0 ? 1 : 0);
+
 /** Start a round. `items` must already be shuffled and sliced to 10; the order must never be shown. */
-export function startRound(topicId: string, items: string[], first: Player): RoundState {
+export function startRound(topicId: string, items: string[], opener: Player): RoundState {
   return {
     topicId, items, idx: 0,
     budgets: [BUDGET, BUDGET], prev: [BUDGET, BUDGET],
     collections: [[], []], log: [],
-    phase: 'hidden', bidder: first, first,
-    bids: [0, 0], locked: [false, false], tieMin: [0, 0], tieRound: 0,
-    result: null, resultStage: 0, count: 3, peek: [false, false], burstKey: 0,
+    phase: 'hidden', opener, turn: opener,
+    price: 0, leader: -1, passed: [false, false], history: [], going: 0,
+    result: null, resultStage: 0, burstKey: 0,
   };
 }
 
@@ -31,91 +36,68 @@ export function revealItem(s: RoundState): RoundState {
   return { ...s, phase: 'item' };
 }
 
-export function startBidding(s: RoundState, privacy: Privacy): RoundState {
-  if (privacy === 'table') return { ...s, phase: 'table', locked: [false, false], peek: [false, false] };
-  return { ...s, phase: 'bid', bidder: s.first, locked: [false, false] };
+export function startBidding(s: RoundState): RoundState {
+  if (s.phase !== 'item') return s;
+  return { ...s, phase: 'auction', turn: s.opener, price: 0, leader: -1, passed: [false, false], history: [], going: 0 };
 }
 
-/** Clamp to [tieMin, budget]. $0 allowed outside tie-breaks. */
-export function setBid(s: RoundState, p: Player, v: number): RoundState {
-  if (s.locked[p]) return s;
-  const nv = Math.max(s.tieMin[p], Math.min(s.budgets[p], Math.round(v)));
-  if (nv === s.bids[p]) return s;
-  const bids: Pair<number> = [s.bids[0], s.bids[1]];
-  bids[p] = nv;
-  return { ...s, bids };
+/** Lowest legal bid for the next raise. */
+export const minBid = (s: RoundState) => (s.leader === -1 ? MIN_RAISE : s.price + MIN_RAISE);
+
+/** Highest amount a player could bid on this item. */
+export const maxBid = (s: RoundState, p: Player) => s.budgets[p];
+
+export const atItemCap = (s: RoundState, p: Player) => s.collections[p].length >= MAX_ITEMS;
+
+/** Can this player place any legal bid right now? */
+export function canBid(s: RoundState, p: Player): boolean {
+  return s.phase === 'auction' && s.turn === p && !s.passed[p] && !atItemCap(s, p) && maxBid(s, p) >= minBid(s);
 }
 
-export function adjustBid(s: RoundState, p: Player, delta: number): RoundState {
-  return setBid(s, p, s.bids[p] + delta);
+/** Place a bid. Must be the player's turn, at least one dollar over the current price, and within budget. */
+export function placeBid(s: RoundState, p: Player, amount: number): RoundState {
+  if (!canBid(s, p)) return s;
+  const a = Math.round(amount);
+  if (a < minBid(s) || a > maxBid(s, p)) return s;
+  const next: RoundState = { ...s, price: a, leader: p, turn: other(p), history: s.history.concat({ p, amount: a }), going: 0 };
+  // Nobody left to raise: the other player already conceded, so it sells on the spot.
+  if (s.passed[other(p)]) return resolve(next, { type: 'win', w: p, price: a });
+  return next;
 }
 
-export function lockBid(s: RoundState, p: Player): RoundState {
-  if (s.locked[p]) return s;
-  const locked: Pair<boolean> = [s.locked[0], s.locked[1]];
-  locked[p] = true;
-  return { ...s, locked };
+/** Concede the item. Ends the auction if there is a leader or the other player already passed. */
+export function pass(s: RoundState, p: Player): RoundState {
+  if (s.phase !== 'auction' || s.turn !== p || s.passed[p]) return s;
+  const passed: Pair<boolean> = [s.passed[0], s.passed[1]];
+  passed[p] = true;
+  const next: RoundState = { ...s, passed, going: 0 };
+  if (s.leader !== -1) return resolve(next, { type: 'win', w: s.leader, price: s.price });
+  if (passed[other(p)]) return resolve(next, { type: 'unclaimed' });
+  return { ...next, turn: other(p) };
 }
 
-/** Pass mode: after the lock stamp, hand over or go to the ready screen. */
-export function afterLock(s: RoundState): RoundState {
-  if (s.phase !== 'bid') return s;
-  if (s.locked[0] && s.locked[1]) return { ...s, phase: 'ready' };
-  const next: Player = s.locked[0] ? 1 : 0;
-  return { ...s, phase: 'pass', bidder: next };
+/** 3-second rule tick: going once → twice → sold. Sold resolves for the leader. */
+export function goingTick(s: RoundState): RoundState {
+  if (s.phase !== 'auction' || s.leader === -1) return s;
+  if (s.going >= 2) return resolve({ ...s, going: 3 }, { type: 'win', w: s.leader, price: s.price });
+  return { ...s, going: (s.going + 1) as 1 | 2 };
 }
 
-export function handedOver(s: RoundState): RoundState {
-  if (s.phase !== 'pass') return s;
-  return { ...s, phase: 'bid' };
-}
-
-export function startCountdown(s: RoundState): RoundState {
-  return { ...s, phase: 'count', count: 3 };
-}
-
-export function countTick(s: RoundState): RoundState {
-  if (s.phase !== 'count' || s.count === 1) return s;
-  return { ...s, count: (s.count - 1) as 3 | 2 | 1 };
-}
-
-export function setPeek(s: RoundState, p: Player, on: boolean): RoundState {
-  const peek: Pair<boolean> = [s.peek[0], s.peek[1]];
-  peek[p] = on;
-  return { ...s, peek };
-}
-
-/**
- * Resolve both bids for the current item.
- * `coin` decides the coin toss (true → P1 wins) and is only consulted when the safety valve fires.
- */
-export function resolve(s: RoundState, coin: () => boolean = () => Math.random() < 0.5): RoundState {
-  const [a, b] = s.bids;
+function resolve(s: RoundState, res: RoundResult): RoundState {
   const item = s.items[s.idx];
-  let res: RoundResult;
-  if (a === b) {
-    if (a === 0) res = { type: 'unclaimed' };
-    else if (s.tieRound >= 2 || (s.budgets[0] <= a && s.budgets[1] <= a)) res = { type: 'win', w: coin() ? 0 : 1, price: a, coin: true };
-    else res = { type: 'tie', amount: a };
-  } else {
-    const w: Player = a > b ? 0 : 1;
-    res = { type: 'win', w, price: Math.max(a, b) };
-  }
-
-  const next: RoundState = { ...s, phase: 'result', result: res, resultStage: 0, prev: [s.budgets[0], s.budgets[1]], peek: [false, false] };
+  const best: Pair<number> = [0, 0];
+  s.history.forEach((b) => { best[b.p] = Math.max(best[b.p], b.amount); });
+  const base: RoundState = { ...s, phase: 'result', result: res, resultStage: 0, prev: [s.budgets[0], s.budgets[1]] };
   if (res.type === 'win') {
     const budgets: Pair<number> = [s.budgets[0], s.budgets[1]];
     budgets[res.w] -= res.price;
     const collections: Pair<typeof s.collections[0]> = [s.collections[0].slice(), s.collections[1].slice()];
     collections[res.w].push({ name: item, price: res.price });
-    const entry: LogEntry = { item, bids: [a, b], w: res.w, price: res.price, contested: a > 0 && b > 0, tieBreak: s.tieRound > 0, after: [budgets[0], budgets[1]] };
-    return { ...next, budgets, collections, log: s.log.concat(entry) };
+    const entry: LogEntry = { item, bids: best, w: res.w, price: res.price, contested: best[0] > 0 && best[1] > 0, raises: s.history.length, after: [budgets[0], budgets[1]] };
+    return { ...base, budgets, collections, log: s.log.concat(entry) };
   }
-  if (res.type === 'unclaimed') {
-    const entry: LogEntry = { item, bids: [0, 0], w: -1, price: 0, contested: false, tieBreak: s.tieRound > 0, after: [s.budgets[0], s.budgets[1]] };
-    return { ...next, log: s.log.concat(entry) };
-  }
-  return next;
+  const entry: LogEntry = { item, bids: best, w: -1, price: 0, contested: false, raises: 0, after: [s.budgets[0], s.budgets[1]] };
+  return { ...base, log: s.log.concat(entry) };
 }
 
 export function showVerdict(s: RoundState): RoundState {
@@ -123,22 +105,15 @@ export function showVerdict(s: RoundState): RoundState {
   return { ...s, resultStage: 1, burstKey: s.burstKey + 1 };
 }
 
-/** Tie-break: both bid again with a minimum equal to the tied amount. */
-export function tieBreak(s: RoundState, privacy: Privacy): RoundState {
-  if (!s.result || s.result.type !== 'tie') return s;
-  const a = s.result.amount;
-  const base: RoundState = { ...s, tieMin: [a, a], bids: [a, a], locked: [false, false], tieRound: s.tieRound + 1, result: null, resultStage: 0 };
-  return startBidding(base, privacy);
-}
-
 export const isLastItem = (s: RoundState) => s.idx >= ITEMS - 1;
 
 export function nextItem(s: RoundState): RoundState {
   if (isLastItem(s)) return s;
-  const first: Player = s.first === 0 ? 1 : 0;
+  const opener = other(s.opener);
   return {
-    ...s, idx: s.idx + 1, phase: 'hidden', bids: [0, 0], locked: [false, false], tieMin: [0, 0], tieRound: 0,
-    result: null, resultStage: 0, first, bidder: first, prev: [s.budgets[0], s.budgets[1]], peek: [false, false],
+    ...s, idx: s.idx + 1, phase: 'hidden', opener, turn: opener,
+    price: 0, leader: -1, passed: [false, false], history: [], going: 0,
+    result: null, resultStage: 0, prev: [s.budgets[0], s.budgets[1]],
   };
 }
 
@@ -193,6 +168,8 @@ export function awardsList(s: RoundState): Award[] {
     const w: Player = ct[0] > ct[1] ? 0 : 1;
     out.push({ title: 'AUCTION THIEF', w, desc: `Won ${ct[w]} contested items` });
   }
+  const war = wins.reduce((m, l) => (l.raises > m.raises ? l : m), wins[0]);
+  if (war && war.raises >= 6) out.push({ title: 'WAR MACHINE', w: (war.w === 1 ? 1 : 0) as Player, desc: `Outlasted ${war.raises} bids for ${war.item}` });
   return out;
 }
 
@@ -203,13 +180,15 @@ export function quip(s: RoundState, names: Pair<string>): string {
   const item = s.items[s.idx];
   const left = ITEMS - 1 - s.idx;
   if (R.type === 'unclaimed') return 'Nobody wanted it. Moving on.';
-  if (R.type === 'tie') return `$${R.amount} each. Someone has to blink.`;
   const w = names[R.w], l = names[1 - R.w], wb = s.budgets[R.w], lb = s.budgets[1 - R.w];
-  if (R.coin) return 'Still dead even. The coin decided.';
+  const raises = s.history.length;
+  if (s.going === 3) return `${l} blinked. Sold on the three count.`;
   if (R.price >= 9) return `${w} spent $${R.price} on ${item}. Bold.`;
   if (wb === 0 && left > 0) return `${w} is broke with ${left} item${left > 1 ? 's' : ''} to go.`;
+  if (raises === 1 && R.price <= 1) return `${item} for $${R.price}. ${l} didn't even flinch.`;
   if (R.price <= 1) return `${item} for $${R.price}. Robbery.`;
-  if (s.tieRound > 0) return `${w} wanted it more.`;
+  if (raises >= 6) return `${w} outlasted ${l} after ${raises} bids.`;
+  if (atItemCap(s, R.w)) return `${w} is at ${MAX_ITEMS} items. Shelf's full.`;
   if (left > 0 && wb <= 4) return `${w} has $${wb} left and ${left} items still hidden.`;
   if (left > 0) return `${l} keeps $${lb}. Is something better coming?`;
   return 'That was the last one.';

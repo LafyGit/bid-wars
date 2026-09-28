@@ -1,5 +1,6 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Platform } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useGame } from './store/GameContext';
 import { colors } from './theme/tokens';
 import { Auction } from './screens/Auction';
@@ -12,13 +13,14 @@ import { MatchIntro } from './screens/MatchIntro';
 import { Settings } from './screens/Settings';
 import { Setup } from './screens/Setup';
 import { Splash } from './screens/Splash';
+import { Subtopics } from './screens/Subtopics';
 import { TopicReveal } from './screens/TopicReveal';
 import { Topics } from './screens/Topics';
 import { Winner } from './screens/Winner';
 
-/** Simple stack: one screen at a time, no tab bar. */
+/** Simple stack: one screen at a time, no tab bar. Screens cross-fade. */
 export function Root() {
-  const { state } = useGame();
+  const { state, rm } = useGame();
   let screen: React.ReactNode;
   switch (state.screen) {
     case 'splash': screen = <Splash />; break;
@@ -26,6 +28,7 @@ export function Root() {
     case 'howto': screen = <HowToPlay />; break;
     case 'setup': screen = <Setup />; break;
     case 'topics': screen = <Topics />; break;
+    case 'subtopics': screen = <Subtopics />; break;
     case 'reveal': screen = <TopicReveal />; break;
     case 'intro': screen = <MatchIntro />; break;
     case 'auction': screen = <Auction />; break;
@@ -35,5 +38,15 @@ export function Root() {
     case 'browser': screen = <Browser />; break;
     case 'settings': screen = <Settings />; break;
   }
-  return <View key={state.screen} style={{ flex: 1, backgroundColor: colors.bg }}>{screen}</View>;
+  const animate = !rm && Platform.OS !== 'web';
+  return (
+    <Animated.View
+      key={state.screen}
+      entering={animate ? FadeIn.duration(220) : undefined}
+      exiting={animate ? FadeOut.duration(120) : undefined}
+      style={{ flex: 1, backgroundColor: colors.bg }}
+    >
+      {screen}
+    </Animated.View>
+  );
 }

@@ -1,6 +1,6 @@
 # Bid Wars
 
-A two-player, one-phone blind auction party game. Each round: $20 of fake money each, 10 hidden items from one topic, secret bids, dramatic reveals. After ten items the players look at both collections and decide the winner themselves.
+A two-player, one-phone auction party game. Each round: $20 of fake money each, 10 hidden items from one subtopic, and open back-and-forth bidding: raise by at least $1 or pass. A player can win at most 5 items. After ten items the players compare collections, hear the AI judge's opinion, and decide the winner themselves.
 
 Built with React Native + Expo (TypeScript) from the V1 design handoff.
 
@@ -29,11 +29,12 @@ npm run typecheck
 App.tsx                     Fonts, safe area, providers
 src/Root.tsx                One screen at a time, no tab bar
 src/store/GameContext.tsx   App state + timers + persistence + sound/haptics around the pure reducer
-src/game/round.ts           Pure round logic: startRound, revealItem, setBid, lockBid, resolve, tieBreak,
+src/game/round.ts           Pure round logic: startRound, revealItem, startBidding, placeBid, pass, goingTick,
                             nextItem, chooseWinner, awardsList, quip
+src/ai/judge.ts             AI judge (Claude via @anthropic-ai/sdk) with an offline fallback
 src/game/types.ts           RoundState, Session, Settings, Award
 src/game/__tests__/         node:test specs for the rules
-src/content/topics.json     The 7 V1 content packs + coming-soon list (data-driven)
+src/content/catalog.ts      Categories → subtopics → items (92 subtopics); topics.ts derives the flat list
 src/theme/tokens.ts         Colors, radii, font families
 src/ui/                     Txt (Display / Mono / Body), Btn, Motion (Reanimated entrances, Burst, Flash),
                             Sheet, Toggle, CountingNumber, PlayerMark
@@ -52,13 +53,20 @@ assets/sfx/                 Placeholder low-gain tones (swap for real cues later
 - **Auto-fit text.** The handoff formulas assumed browser glyph metrics. On device Archivo Expanded Black caps
   average 0.93em and Condensed Black 0.59em, so `nameSize` uses 0.9 and `itemSize` uses 0.6 per character, with
   `adjustsFontSizeToFit` as a guard.
-- **Privacy.** The item name is not rendered until the card flip begins. The opponent's bid is never rendered
-  before the reveal. The private bid screen blanks itself when the app goes to the background. Progress segments
-  show position only.
+- **Open bidding.** Both players share the screen. The reducer enforces turn order, the $1 minimum raise, the
+  budget cap and the 5-item cap; a pass concedes the item to the leader (or leaves it unclaimed when nobody bid).
+  The optional 3-second rule (Settings) counts "going once, going twice, sold" after every bid.
+- **AI judge.** Set `EXPO_PUBLIC_ANTHROPIC_API_KEY` in `.env` (see `.env.example`) and the final screen asks
+  Claude (`claude-opus-5`) for a verdict on the two collections. Without a key a built-in judge rules instead.
+  The key ships inside the bundle, which is fine for a private TestFlight build; front it with a proxy before a
+  public release.
+- **Privacy.** The item name is not rendered until the card flip begins. Progress segments show position only.
 - **Reduced motion.** The in-app toggle and the OS setting both collapse every entrance to a short fade, skip the
   countdown and topic spin, and drop the burst, flash and shake.
 - **Persistence.** Names, match score, session stats and settings are stored with AsyncStorage under the
   `bidwars.*` keys from the handoff.
+- **Content.** Add a subtopic by appending to its category in `catalog.ts`; anything with fewer than 10 items is
+  skipped automatically.
 - **Sound.** `src/fx/sound.ts` is an event bus (`reveal`, `lock`, `countdown_tick`, `win`, `tie`, `final_result`,
   `topic_spin_tick`, `topic_land`) wired to placeholder tones. Respects the Sound toggle and the silent switch.
 

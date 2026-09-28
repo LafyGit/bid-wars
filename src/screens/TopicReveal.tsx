@@ -13,7 +13,7 @@ export function TopicReveal() {
   const g = useGame();
   const { idx, landed } = g.state.reveal;
   const t = TOPICS[idx] ?? TOPICS[0];
-  const title = t.revealTitle;
+  const title = t.categoryTitle;
   const size = Math.min(76, Math.floor(340 / (title.length * 0.8)));
   const ring = new Keyframe({ 0: { opacity: 0.9, transform: [{ scale: 0.3 }] }, 100: { opacity: 0, transform: [{ scale: 2.6 }], easing: Easing.out(Easing.ease) } }).duration(700);
   return (
@@ -30,7 +30,7 @@ export function TopicReveal() {
           </Animated.View>
         )}
         {landed && (
-          <Enter kind="pop"><Display size={22} wdth={110} weight={800} ls={0.04} lh={1.2} align="center">{t.revealSubtitle}</Display></Enter>
+          <Enter kind="pop"><Display size={22} wdth={110} weight={800} ls={0.04} lh={1.2} align="center">{t.title}</Display></Enter>
         )}
       </View>
       {landed && (

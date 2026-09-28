@@ -10,8 +10,8 @@ import { Display, Mono, nameSize } from '../ui/Txt';
 
 function Tile({ big, label, delay }: { big: string; label: string; delay: number }) {
   return (
-    <Enter kind="in" delay={delay} duration={400} style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 18, backgroundColor: 'rgba(14,15,18,0.7)', borderWidth: 1, borderColor: colors.line10 }}>
-      <Display size={30} ls={-0.02} lh={1.05}>{big}</Display>
+    <Enter kind="in" delay={delay} duration={400} style={{ flex: 1, paddingHorizontal: 12, paddingVertical: 12, borderRadius: 18, backgroundColor: 'rgba(14,15,18,0.7)', borderWidth: 1, borderColor: colors.line10 }}>
+      <Display size={26} ls={-0.02} lh={1.05}>{big}</Display>
       <Mono size={10} style={{ marginTop: 2 }}>{label}</Mono>
     </Enter>
   );
@@ -41,11 +41,12 @@ export function MatchIntro() {
         <Enter kind="right" delay={120} duration={460} style={{ alignSelf: 'flex-end' }}><Display size={nameSize(n2, 84, fit)} color={colors.p2} ls={-0.04} lh={0.95} align="right" numberOfLines={1} adjustsFontSizeToFit>{n2}</Display></Enter>
         <Row gap={10} style={{ marginTop: 34 }}>
           <Tile big="$20" label="EACH" delay={480} />
-          <Tile big="10" label="HIDDEN ITEMS" delay={480} />
+          <Tile big="10" label="HIDDEN ITEMS" delay={520} />
+          <Tile big="5" label="MAX EACH" delay={560} />
         </Row>
         <Enter kind="in" delay={640} duration={400} style={{ marginTop: 22 }}>
           <Mono color={accent} ls={0.16}>ONE RULE</Mono>
-          <Display size={25} wdth={118} ls={-0.01} lh={1.05} style={{ marginTop: 6 }}>YOU DON’T KNOW WHAT’S NEXT.</Display>
+          <Display size={25} wdth={118} ls={-0.01} lh={1.05} style={{ marginTop: 6 }}>OUTBID THEM OR BACK OUT.</Display>
         </Enter>
       </View>
       <Enter kind="in" delay={760} duration={400}>

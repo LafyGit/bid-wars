@@ -1,14 +1,14 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
 import { AccessibilityInfo } from 'react-native';
-import { TOPICS, topicById, type Topic } from '../content/topics';
+import { TOPICS, randomTopic, topicById, type Topic } from '../content/topics';
 import * as R from '../game/round';
-import type { Pair, Player, Privacy, RoundState, Session, Settings } from '../game/types';
+import type { Pair, Player, RoundState, Session, Settings } from '../game/types';
 import { haptic, setHapticsEnabled } from '../fx/haptics';
 import { initSound, setSoundEnabled, sfx } from '../fx/sound';
 import { KEYS, load, loadRaw, save } from './storage';
 
 export type Screen =
-  | 'splash' | 'home' | 'howto' | 'setup' | 'topics' | 'reveal' | 'intro'
+  | 'splash' | 'home' | 'howto' | 'setup' | 'topics' | 'subtopics' | 'reveal' | 'intro'
   | 'auction' | 'final' | 'winner' | 'awards' | 'browser' | 'settings';
 
 export type AppState = {
@@ -16,12 +16,12 @@ export type AppState = {
   osReducedMotion: boolean;
   screen: Screen;
   back: Screen;
-  /** Raw stored names; empty string falls back to "Player N". */
   names: Pair<string>;
   draft: Pair<string>;
   score: Pair<number>;
   session: Session;
   settings: Settings;
+  categoryId: string;
   topicId: string;
   round: RoundState | null;
   reveal: { idx: number; landed: boolean };
@@ -33,7 +33,7 @@ export type AppState = {
   winnerBurst: number;
 };
 
-const DEFAULT_SETTINGS: Settings = { sound: true, haptics: true, reducedMotion: false, privacy: 'pass' };
+const DEFAULT_SETTINGS: Settings = { sound: true, haptics: true, reducedMotion: false, threeSecondRule: false, aiJudge: true };
 
 const initial: AppState = {
   hydrated: false,
@@ -45,6 +45,7 @@ const initial: AppState = {
   score: [0, 0],
   session: R.newSession(),
   settings: DEFAULT_SETTINGS,
+  categoryId: TOPICS[0].categoryId,
   topicId: TOPICS[0].id,
   round: null,
   reveal: { idx: 0, landed: false },
@@ -63,9 +64,10 @@ type Action =
   | { type: 'draft'; i: Player; value: string }
   | { type: 'draftReset' }
   | { type: 'names'; names: Pair<string> }
-  | { type: 'setting'; key: keyof Settings; value: boolean | Privacy }
+  | { type: 'setting'; key: keyof Settings; value: boolean }
   | { type: 'resetConfirm'; on: boolean }
   | { type: 'resetScore' }
+  | { type: 'category'; id: string }
   | { type: 'spin'; topicId: string; idx: number; landed: boolean }
   | { type: 'spinTick'; idx: number; landed: boolean }
   | { type: 'round'; round: RoundState | null }
@@ -84,6 +86,7 @@ function reducer(s: AppState, a: Action): AppState {
     case 'setting': return { ...s, settings: { ...s.settings, [a.key]: a.value } };
     case 'resetConfirm': return { ...s, confirmReset: a.on };
     case 'resetScore': return { ...s, score: [0, 0], session: R.newSession(), confirmReset: false };
+    case 'category': return { ...s, categoryId: a.id, screen: 'subtopics', menu: false, collOpen: false };
     case 'spin': return { ...s, topicId: a.topicId, reveal: { idx: a.idx, landed: a.landed }, screen: 'reveal', menu: false, collOpen: false };
     case 'spinTick': return { ...s, reveal: { idx: a.idx, landed: a.landed } };
     case 'round': return { ...s, round: a.round };
@@ -99,29 +102,24 @@ export type Game = {
   /** Effective display names ("Player 1" fallback). */
   names: Pair<string>;
   rm: boolean;
-  privacy: Privacy;
   go: (screen: Screen, back?: Screen) => void;
   play: () => void;
   openSetup: () => void;
   setDraft: (i: Player, v: string) => void;
   setupDone: () => void;
   toggleSound: () => void;
-  setSetting: (k: keyof Settings, v: boolean | Privacy) => void;
+  setSetting: (k: keyof Settings, v: boolean) => void;
   resetScore: () => void;
+  openCategory: (id: string) => void;
   startRandom: () => void;
   chooseTopic: (id: string) => void;
   startRound: () => void;
   tapCard: () => void;
   startBidding: () => void;
-  adjust: (p: Player, d: number) => void;
-  setBid: (p: Player, v: number) => void;
-  lock: (p: Player) => void;
-  handedOver: () => void;
-  reveal: () => void;
-  tieBreak: () => void;
+  bid: (p: Player, amount: number) => void;
+  pass: (p: Player) => void;
   next: () => void;
   chooseWinner: (w: Player) => void;
-  peek: (p: Player, on: boolean) => void;
   toggleColl: () => void;
   toggleMenu: () => void;
   quitRound: () => void;
@@ -129,11 +127,17 @@ export type Game = {
 
 const Ctx = createContext<Game | null>(null);
 
+/** Pause before the verdict lands on the result screen. */
+const VERDICT_DELAY = 420;
+/** 3-second rule: one tick per second after the last bid. */
+const GOING_TICK = 1000;
+
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initial);
   const stateRef = useRef(state);
   stateRef.current = state;
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const goingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const rm = state.settings.reducedMotion || state.osReducedMotion;
   const rmRef = useRef(rm);
@@ -144,9 +148,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     timers.current.push(t);
     return t;
   }, []);
-  const clearTimers = useCallback(() => { timers.current.forEach(clearTimeout); timers.current = []; }, []);
+  const clearTimers = useCallback(() => {
+    timers.current.forEach(clearTimeout); timers.current = [];
+    if (goingTimer.current) { clearTimeout(goingTimer.current); goingTimer.current = null; }
+  }, []);
 
-  // Hydrate persisted state, then leave the splash after 1.7s (or on tap).
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -170,39 +176,41 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const setRound = useCallback((fn: (r: RoundState) => RoundState) => {
     const r = stateRef.current.round;
-    if (!r) return;
+    if (!r) return null;
     const nr = fn(r);
     if (nr !== r) {
-      // Keep the ref current for timer chains that dispatch several steps in a row.
       stateRef.current = { ...stateRef.current, round: nr };
       dispatch({ type: 'round', round: nr });
     }
+    return nr;
   }, []);
 
-  const privacyOf = () => stateRef.current.settings.privacy;
-
-  const api = useMemo<Omit<Game, 'state' | 'topic' | 'names' | 'rm' | 'privacy'>>(() => {
+  const api = useMemo<Omit<Game, 'state' | 'topic' | 'names' | 'rm'>>(() => {
     const go = (screen: Screen, back?: Screen) => dispatch({ type: 'go', screen, back });
 
-    const startCountdown = () => {
-      if (rmRef.current) return resolveNow();
-      setRound(R.startCountdown);
-      sfx('countdown_tick'); haptic('tick');
-      later(() => { setRound(R.countTick); sfx('countdown_tick'); haptic('tick'); }, 420);
-      later(() => { setRound(R.countTick); sfx('countdown_tick'); haptic('tick'); }, 840);
-      later(resolveNow, 1260);
+    const stopGoing = () => { if (goingTimer.current) { clearTimeout(goingTimer.current); goingTimer.current = null; } };
+
+    /** After an item resolves: sound, haptic, then the verdict beat. */
+    const afterResolve = (r: RoundState) => {
+      stopGoing();
+      if (r.result?.type === 'win') { sfx('win'); haptic('win'); } else { haptic('unclaimed'); }
+      later(() => setRound(R.showVerdict), VERDICT_DELAY);
     };
 
-    const resolveNow = () => {
-      setRound((r) => R.resolve(r));
-      later(() => {
-        setRound(R.showVerdict);
-        const res = stateRef.current.round?.result;
-        if (!res) return;
-        if (res.type === 'tie') { sfx('tie'); haptic('tie'); }
-        else if (res.type === 'win') { sfx('win'); haptic('win'); }
-        else haptic('unclaimed');
-      }, 380);
+    /** 3-second rule: going once, twice, sold. Restarts on every bid. */
+    const armGoing = () => {
+      stopGoing();
+      if (!stateRef.current.settings.threeSecondRule) return;
+      const tick = () => {
+        const r = stateRef.current.round;
+        if (!r || r.phase !== 'auction' || r.leader === -1) return;
+        const nr = setRound(R.goingTick);
+        if (!nr) return;
+        if (nr.phase === 'result') { afterResolve(nr); return; }
+        sfx('countdown_tick'); haptic('tick');
+        goingTimer.current = setTimeout(tick, GOING_TICK);
+      };
+      goingTimer.current = setTimeout(tick, GOING_TICK);
     };
 
     return {
@@ -221,8 +229,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setSetting: (k, v) => {
         const settings = { ...stateRef.current.settings, [k]: v };
         save(KEYS.settings, settings);
-        if (k === 'haptics') setHapticsEnabled(v as boolean);
-        if (k === 'sound') setSoundEnabled(v as boolean);
+        if (k === 'haptics') setHapticsEnabled(v);
+        if (k === 'sound') setSoundEnabled(v);
         dispatch({ type: 'setting', key: k, value: v });
       },
       resetScore: () => {
@@ -230,21 +238,23 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         save(KEYS.score, [0, 0]); save(KEYS.session, R.newSession());
         dispatch({ type: 'resetScore' });
       },
+      openCategory: (id) => { haptic('nav'); dispatch({ type: 'category', id }); },
       startRandom: () => {
         clearTimers();
-        const target = Math.floor(Math.random() * TOPICS.length);
+        const target = randomTopic();
+        const targetIdx = TOPICS.indexOf(target);
         if (rmRef.current) {
-          dispatch({ type: 'spin', topicId: TOPICS[target].id, idx: target, landed: true });
+          dispatch({ type: 'spin', topicId: target.id, idx: targetIdx, landed: true });
           sfx('topic_land'); haptic('land');
           return;
         }
-        dispatch({ type: 'spin', topicId: TOPICS[target].id, idx: Math.floor(Math.random() * TOPICS.length), landed: false });
+        dispatch({ type: 'spin', topicId: target.id, idx: Math.floor(Math.random() * TOPICS.length), landed: false });
         let t = 0, i = Math.floor(Math.random() * TOPICS.length);
-        const steps = 14;
+        const steps = 16;
         for (let s = 0; s < steps; s++) {
-          t += 45 + s * s * 1.6;
+          t += 45 + s * s * 1.5;
           const last = s === steps - 1;
-          const idx = last ? target : (i = (i + 1) % TOPICS.length);
+          const idx = last ? targetIdx : (i = (i + 1) % TOPICS.length);
           const tt = setTimeout(() => {
             dispatch({ type: 'spinTick', idx, landed: last });
             sfx(last ? 'topic_land' : 'topic_spin_tick');
@@ -263,8 +273,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const s = stateRef.current;
         const topic = topicById(s.topicId);
         const items = R.shuffle(topic.items).slice(0, R.ITEMS);
-        const first: Player = (s.session.rounds % 2) as Player;
-        dispatch({ type: 'round', round: R.startRound(topic.id, items, first) });
+        const opener: Player = (s.session.rounds % 2) as Player;
+        dispatch({ type: 'round', round: R.startRound(topic.id, items, opener) });
         go('auction', 'auction');
       },
       tapCard: () => {
@@ -273,32 +283,25 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         setRound(R.revealItem);
         sfx('reveal'); haptic('reveal');
       },
-      startBidding: () => setRound((r) => R.startBidding(r, privacyOf())),
-      adjust: (p, d) => {
-        const before = stateRef.current.round?.bids[p];
-        setRound((r) => R.adjustBid(r, p, d));
-        if (stateRef.current.round?.bids[p] !== before) haptic('adjust');
-      },
-      setBid: (p, v) => {
-        const before = stateRef.current.round?.bids[p];
-        setRound((r) => R.setBid(r, p, v));
-        if (stateRef.current.round?.bids[p] !== before) haptic('adjust');
-      },
-      lock: (p) => {
-        const r = stateRef.current.round;
-        if (!r || r.locked[p]) return;
-        setRound((x) => R.lockBid(x, p));
+      startBidding: () => { setRound(R.startBidding); haptic('nav'); },
+      bid: (p, amount) => {
+        const before = stateRef.current.round;
+        if (!before || !R.canBid(before, p)) return;
+        const nr = setRound((r) => R.placeBid(r, p, amount));
+        if (!nr || nr === before) return;
         sfx('lock'); haptic('lock');
-        const nr = stateRef.current.round!;
-        if (nr.phase === 'table') {
-          if (nr.locked[0] && nr.locked[1]) later(startCountdown, 500);
-          return;
-        }
-        later(() => setRound(R.afterLock), 650);
+        if (nr.phase === 'result') afterResolve(nr);
+        else armGoing();
       },
-      handedOver: () => { setRound(R.handedOver); haptic('nav'); },
-      reveal: startCountdown,
-      tieBreak: () => setRound((r) => R.tieBreak(r, privacyOf())),
+      pass: (p) => {
+        const before = stateRef.current.round;
+        if (!before || before.phase !== 'auction' || before.turn !== p) return;
+        const nr = setRound((r) => R.pass(r, p));
+        if (!nr || nr === before) return;
+        haptic('adjust');
+        if (nr.phase === 'result') afterResolve(nr);
+        else stopGoing();
+      },
       next: () => {
         const r = stateRef.current.round;
         if (!r) return;
@@ -317,7 +320,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         dispatch({ type: 'roundWon', w, score, session });
         sfx('final_result'); haptic('final');
       },
-      peek: (p, on) => setRound((r) => R.setPeek(r, p, on)),
       toggleColl: () => dispatch({ type: 'coll', open: !stateRef.current.collOpen }),
       toggleMenu: () => dispatch({ type: 'menu', open: !stateRef.current.menu }),
       quitRound: () => { clearTimers(); dispatch({ type: 'round', round: null }); go('home', 'home'); },
@@ -326,7 +328,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const names: Pair<string> = [state.names[0].trim() || 'Player 1', state.names[1].trim() || 'Player 2'];
   const topic = topicById(state.topicId);
-  const value = useMemo<Game>(() => ({ ...api, state, topic, names, rm, privacy: state.settings.privacy }), [api, state, topic, names[0], names[1], rm]);
+  const value = useMemo<Game>(() => ({ ...api, state, topic, names, rm }), [api, state, topic, names[0], names[1], rm]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

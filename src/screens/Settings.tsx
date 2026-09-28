@@ -1,19 +1,12 @@
 import React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
+import { judgeAvailable } from '../ai/judge';
 import { useGame } from '../store/GameContext';
 import { colors } from '../theme/tokens';
 import { TextLink } from '../ui/Btn';
 import { Screen } from '../ui/Screen';
 import { ToggleRow } from '../ui/Toggle';
 import { Body, Display } from '../ui/Txt';
-
-function Seg({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
-  return (
-    <Pressable accessibilityRole="radio" accessibilityState={{ checked: on }} onPress={onPress} style={{ flex: 1, height: 44, borderRadius: 11, backgroundColor: on ? colors.ink : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-      <Body size={13} weight={700} color={on ? colors.bg : colors.ink3}>{label}</Body>
-    </Pressable>
-  );
-}
 
 function RowBtn({ label, right, color = colors.ink, onPress, hint }: { label: string; right: string; color?: string; onPress: () => void; hint?: string }) {
   return (
@@ -34,17 +27,11 @@ export function Settings() {
       <TextLink label="← BACK" onPress={() => g.go(g.state.back === 'auction' && g.state.round ? 'auction' : 'home')} />
       <Display size={36} style={{ marginTop: 10 }}>SETTINGS</Display>
       <ScrollView style={{ flex: 1, marginTop: 18 }} contentContainerStyle={{ gap: 8, paddingBottom: 8 }} showsVerticalScrollIndicator={false}>
-        <ToggleRow label="Sound" sub="Reveal, lock, countdown and win cues" value={s.sound} onChange={(v) => g.setSetting('sound', v)} />
-        <ToggleRow label="Haptics" sub="Subtle taps on bids, locks and wins" value={s.haptics} onChange={(v) => g.setSetting('haptics', v)} />
-        <ToggleRow label="Reduced motion" sub="Skips countdowns, flips and bursts" value={s.reducedMotion} onChange={(v) => g.setSetting('reducedMotion', v)} />
-        <View style={{ paddingHorizontal: 16, paddingVertical: 14, borderRadius: 18, backgroundColor: colors.surface }}>
-          <Body size={16} weight={700} color={colors.ink}>Bid privacy</Body>
-          <Body size={12} color={colors.ink4} style={{ marginTop: 2 }}>How you hide bids on one phone</Body>
-          <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', gap: 6, marginTop: 12, padding: 4, borderRadius: 14, backgroundColor: colors.bg }}>
-            <Seg label="Pass the phone" on={s.privacy === 'pass'} onPress={() => g.setSetting('privacy', 'pass')} />
-            <Seg label="Table mode" on={s.privacy === 'table'} onPress={() => g.setSetting('privacy', 'table')} />
-          </View>
-        </View>
+        <ToggleRow label="3-second rule" sub="Going once, going twice, sold. Raise within 3 seconds or lose it" value={s.threeSecondRule} onChange={(v) => g.setSetting('threeSecondRule', v)} />
+        <ToggleRow label="AI judge" sub={judgeAvailable() ? 'Claude weighs in on the final collections' : 'Built-in judge (add an API key for Claude)'} value={s.aiJudge} onChange={(v) => g.setSetting('aiJudge', v)} />
+        <ToggleRow label="Sound" sub="Reveal, bid, going-once and win cues" value={s.sound} onChange={(v) => g.setSetting('sound', v)} />
+        <ToggleRow label="Haptics" sub="Subtle taps on bids, passes and wins" value={s.haptics} onChange={(v) => g.setSetting('haptics', v)} />
+        <ToggleRow label="Reduced motion" sub="Skips flips, bursts and the topic spin" value={s.reducedMotion} onChange={(v) => g.setSetting('reducedMotion', v)} />
         <RowBtn label="Change player names" right={`${n1} & ${n2} →`} onPress={g.openSetup} />
         <RowBtn
           label={g.state.confirmReset ? 'Tap again to reset' : 'Reset match score'}
@@ -55,7 +42,7 @@ export function Settings() {
         />
         <View style={{ paddingHorizontal: 16, paddingVertical: 14, borderRadius: 18, backgroundColor: colors.surface }}>
           <Body size={16} weight={700} color={colors.ink}>About</Body>
-          <Body size={13} color={colors.ink3} lh={1.5} style={{ marginTop: 4 }}>Bid Wars v1.0. A two-player blind auction party game. All money is fake. All regret is real.</Body>
+          <Body size={13} color={colors.ink3} lh={1.5} style={{ marginTop: 4 }}>Bid Wars v1.1. A two-player open auction party game. All money is fake. All regret is real.</Body>
         </View>
       </ScrollView>
     </Screen>

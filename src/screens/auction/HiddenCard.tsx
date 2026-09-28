@@ -85,7 +85,7 @@ export function HiddenCard() {
         {r.phase === 'item' && (
           <Enter kind="in" delay={380} duration={300} style={{ gap: 8 }}>
             <CTA label="START BIDDING" size={18} onPress={g.startBidding} />
-            <Mono color={colors.ink4} ls={0.12} align="center">{g.names[r.first]} BIDS FIRST</Mono>
+            <Mono color={colors.ink4} ls={0.12} align="center">{g.names[r.opener]} OPENS THE BIDDING</Mono>
           </Enter>
         )}
       </View>
