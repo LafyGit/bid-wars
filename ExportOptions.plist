@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- App Store Connect upload from the command line. Automatic signing plus
+       -allowProvisioningUpdates lets Xcode mint the distribution certificate
+       against the signed-in Xcode account; destination upload sends the build
+       to App Store Connect with that same session. -->
+  <key>method</key>
+  <string>app-store-connect</string>
+  <key>teamID</key>
+  <string>CN8378NUAA</string>
+  <key>signingStyle</key>
+  <string>automatic</string>
+  <key>destination</key>
+  <string>upload</string>
+  <key>uploadSymbols</key>
+  <true/>
+  <!-- Keep the project's own build number; never let Xcode pick a new one. -->
+  <key>manageAppVersionAndBuildNumber</key>
+  <false/>
+</dict>
+</plist>

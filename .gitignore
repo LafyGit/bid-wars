@@ -12,3 +12,5 @@ expo-env.d.ts
 .DS_Store
 ios/
 android/
+build/
+ExportOptions-local.plist
