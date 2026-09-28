@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, type ViewStyle, type StyleProp } from 'react-native';
+import { Platform, View, type ViewStyle, type StyleProp } from 'react-native';
 import Animated, { Easing, FadeIn, Keyframe, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { useGame } from '../store/GameContext';
 
@@ -47,6 +47,8 @@ const DEFAULT_DURATION: Record<EnterKind, number> = { in: 380, fade: 300, pop: 4
 export function useEnter() {
   const { rm } = useGame();
   return (kind: EnterKind, delay = 0, duration = DEFAULT_DURATION[kind]) => {
+    // Reanimated keyframe entrances leave views at their first frame on web, so web gets no entrances.
+    if (Platform.OS === 'web') return undefined;
     if (rm) return FadeIn.duration(120);
     return keyframe(kind, duration).delay(delay);
   };
@@ -85,7 +87,7 @@ export function Pulse({ children, style, period = 1600, min = 0.4 }: { children:
 /** Full-bleed color flash: opacity .45 → 0. Mount it keyed so it replays. */
 export function Flash({ color, duration = 600 }: { color: string; duration?: number }) {
   const { rm } = useGame();
-  if (rm) return null;
+  if (rm || Platform.OS === 'web') return null;
   const kf = new Keyframe({ 0: { opacity: 0.45 }, 100: { opacity: 0, easing: Easing.out(Easing.ease) } }).duration(duration);
   return (
     <Animated.View pointerEvents="none" entering={kf} style={{ position: 'absolute', top: -400, left: -100, right: -100, bottom: -400 }}>
@@ -97,7 +99,7 @@ export function Flash({ color, duration = 600 }: { color: string; duration?: num
 /** Radial particle burst: 22 particles + a ring. Position it at the center of a relative parent. */
 export function Burst({ color, seed }: { color: string; seed: number }) {
   const { rm } = useGame();
-  if (rm) return null;
+  if (rm || Platform.OS === 'web') return null;
   const parts = React.useMemo(() => Array.from({ length: 22 }, (_, i) => {
     const ang = (i / 22) * Math.PI * 2 + Math.random() * 0.3;
     const dist = 100 + Math.random() * 90;

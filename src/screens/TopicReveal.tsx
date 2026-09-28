@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import Animated, { FadeIn, Keyframe, Easing } from 'react-native-reanimated';
 import { TOPICS } from '../content/topics';
 import { useGame } from '../store/GameContext';
@@ -24,7 +24,7 @@ export function TopicReveal() {
         <View style={{ marginTop: 22, height: 124, alignItems: 'center', justifyContent: 'center' }}>
           <Display size={size} ls={-0.04} lh={0.9} align="center" color={landed ? t.accent : colors.ink} accessibilityLiveRegion="polite">{title}</Display>
         </View>
-        {landed && !g.rm && (
+        {landed && !g.rm && Platform.OS !== 'web' && (
           <Animated.View pointerEvents="none" entering={ring} style={{ position: 'absolute', width: 260, height: 260 }}>
             <View style={{ flex: 1, borderRadius: 130, borderWidth: 3, borderColor: t.accent, opacity: 0 }} />
           </Animated.View>

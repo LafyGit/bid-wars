@@ -1,6 +1,6 @@
 import 'react-native-reanimated';
 import React from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -15,7 +15,16 @@ export default function App() {
       <StatusBar style="light" />
       {loaded ? (
         <GameProvider>
-          <Root />
+          {Platform.OS === 'web' ? (
+            // Browser demo: keep the phone layout in a centred column no wider than a large phone.
+            <View style={{ flex: 1, backgroundColor: '#060607', alignItems: 'center' }}>
+              <View style={{ flex: 1, width: '100%', maxWidth: 430, backgroundColor: colors.bg }}>
+                <Root />
+              </View>
+            </View>
+          ) : (
+            <Root />
+          )}
         </GameProvider>
       ) : (
         <View style={{ flex: 1, backgroundColor: colors.bg }} />

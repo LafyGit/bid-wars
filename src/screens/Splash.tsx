@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import Animated, { Keyframe } from 'react-native-reanimated';
 import { useGame } from '../store/GameContext';
 import { colors } from '../theme/tokens';
@@ -14,7 +14,7 @@ export function Splash() {
       <View style={{ alignItems: 'flex-start' }}>
         <Enter kind="left" duration={520}><Display size={98} ls={-0.045} lh={0.84}>BID</Display></Enter>
         <Enter kind="right" delay={110} duration={520}><Display size={98} ls={-0.045} lh={0.84}>WARS</Display></Enter>
-        <Animated.View entering={g.rm ? undefined : sweep} style={{ flexDirection: 'row', alignSelf: 'stretch', height: 8, marginTop: 20, gap: 6, transformOrigin: 'left' }}>
+        <Animated.View entering={g.rm || Platform.OS === 'web' ? undefined : sweep} style={{ flexDirection: 'row', alignSelf: 'stretch', height: 8, marginTop: 20, gap: 6, transformOrigin: 'left' }}>
           <View style={{ flex: 1, backgroundColor: colors.p1, borderRadius: 2 }} />
           <View style={{ flex: 1, backgroundColor: colors.p2, borderRadius: 2 }} />
         </Animated.View>
