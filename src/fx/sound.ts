@@ -4,14 +4,14 @@ import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-aud
 export type SoundEvent = 'reveal' | 'lock' | 'countdown_tick' | 'win' | 'tie' | 'final_result' | 'topic_spin_tick' | 'topic_land';
 
 const sources: Record<SoundEvent, number> = {
-  reveal: require('../../assets/sfx/reveal.wav'),
-  lock: require('../../assets/sfx/lock.wav'),
-  countdown_tick: require('../../assets/sfx/tick.wav'),
-  win: require('../../assets/sfx/win.wav'),
-  tie: require('../../assets/sfx/tie.wav'),
-  final_result: require('../../assets/sfx/final.wav'),
-  topic_spin_tick: require('../../assets/sfx/spin.wav'),
-  topic_land: require('../../assets/sfx/land.wav'),
+  reveal: require('../../assets/sfx/reveal.caf'),
+  lock: require('../../assets/sfx/lock.caf'),
+  countdown_tick: require('../../assets/sfx/tick.caf'),
+  win: require('../../assets/sfx/win.caf'),
+  tie: require('../../assets/sfx/tie.caf'),
+  final_result: require('../../assets/sfx/final.caf'),
+  topic_spin_tick: require('../../assets/sfx/spin.caf'),
+  topic_land: require('../../assets/sfx/land.caf'),
 };
 
 let enabled = true;
