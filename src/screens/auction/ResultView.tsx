@@ -30,7 +30,7 @@ export function ResultView() {
           <Enter key={p} kind={p === 0 ? 'left' : 'right'} duration={360} style={{ flex: 1 }}>
             <View style={{ alignItems: 'center', opacity: show && (!win || R.w !== p) ? 0.35 : 1 }}>
               <Mono color={playerColor(p)} ls={0.12} numberOfLines={1}>{g.names[p]}</Mono>
-              <Display size={56} ls={-0.03} lh={1} tabular>{best[p] ? `$${best[p]}` : '—'}</Display>
+              <Display size={56} ls={-0.03} lh={1} tabular color={best[p] ? colors.ink : colors.ink5}>${best[p]}</Display>
               <Mono size={10} color={colors.ink4}>TOP BID</Mono>
             </View>
           </Enter>
@@ -49,8 +49,8 @@ export function ResultView() {
             <Enter kind="pop" delay={120} duration={460} style={{ marginTop: 12 }}>
               <Display size={nameSize(headline, 54)} color={color} ls={-0.035} lh={0.95} align="center" numberOfLines={1} adjustsFontSizeToFit>{headline}</Display>
             </Enter>
-            <Enter kind="pop" delay={240} duration={400} style={{ marginTop: 10, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 14, backgroundColor: color }}>
-              <Display size={22} wdth={90} color={colors.bg} ls={0} lh={1.1} numberOfLines={1} adjustsFontSizeToFit>{item} · ${R.price}</Display>
+            <Enter kind="pop" delay={240} duration={400} style={{ marginTop: 10, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 14, backgroundColor: color, maxWidth: 330 }}>
+              <Display size={item.length > 22 ? 15 : item.length > 14 ? 18 : 22} wdth={90} color={colors.bg} ls={0} lh={1.1} numberOfLines={1}>{item} · ${R.price}</Display>
             </Enter>
             <Enter kind="in" delay={340} duration={300} style={{ marginTop: 18, flexDirection: 'row', alignItems: 'baseline', gap: 10 }}>
               <Mono ls={0.12}>BUDGET</Mono>

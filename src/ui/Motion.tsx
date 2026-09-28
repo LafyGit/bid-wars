@@ -17,7 +17,7 @@ function keyframe(kind: EnterKind, duration: number) {
     case 'left': return new Keyframe({ 0: { opacity: 0, transform: [{ translateX: -80 }] }, 100: { opacity: 1, transform: [{ translateX: 0 }], easing: EASE_OUT_QUICK } }).duration(duration);
     case 'right': return new Keyframe({ 0: { opacity: 0, transform: [{ translateX: 80 }] }, 100: { opacity: 1, transform: [{ translateX: 0 }], easing: EASE_OUT_QUICK } }).duration(duration);
     case 'up': return new Keyframe({ 0: { transform: [{ translateY: 600 }] }, 100: { transform: [{ translateY: 0 }], easing: EASE_OUT_QUICK } }).duration(duration);
-    case 'stamp': return new Keyframe({ 0: { opacity: 0, transform: [{ scale: 2.2 }] }, 60: { opacity: 1, transform: [{ scale: 0.94 }] }, 100: { opacity: 1, transform: [{ scale: 1 }] } }).duration(duration);
+    case 'stamp': return new Keyframe({ 0: { opacity: 0, transform: [{ scale: 1.7 }] }, 60: { opacity: 1, transform: [{ scale: 0.94 }] }, 100: { opacity: 1, transform: [{ scale: 1 }] } }).duration(duration);
     case 'count': return new Keyframe({ 0: { opacity: 0, transform: [{ scale: 1.9 }] }, 35: { opacity: 1, transform: [{ scale: 1 }] }, 100: { opacity: 1, transform: [{ scale: 0.88 }] } }).duration(duration);
     case 'tie':
       // pop (300ms) then shake ±12/±7 twice (420ms × 2) — total 1140ms
