@@ -119,7 +119,8 @@ export function Body({ size = 15, color = colors.ink2, ls = 0, lh = 1.4, align, 
  * Archivo Expanded Black caps average 0.93em advance minus 0.04em tracking, so k = 0.9
  * (the handoff's 0.86 runs slightly wide on device). Pair with adjustsFontSizeToFit as a guard.
  */
-export const nameSize = (name: string, max: number, fitWidth = 330) => Math.max(20, Math.min(max, Math.floor(fitWidth / (Math.max(name.length, 1) * 0.9))));
+/** Archivo Expanded Black caps average ~1.0em advance; 0.9 let long names spill past the edge on device. */
+export const nameSize = (name: string, max: number, fitWidth = 330) => Math.max(20, Math.min(max, Math.floor(fitWidth / (Math.max(name.length, 1) * 1.0))));
 
 /**
  * Auto-fit for condensed item names: min(92, floor(fitWidth / (longestWord × k))).
