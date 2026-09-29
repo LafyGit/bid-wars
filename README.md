@@ -34,7 +34,7 @@ src/game/round.ts           Pure round logic: startRound, revealItem, startBiddi
 src/ai/judge.ts             AI judge (Claude via @anthropic-ai/sdk) with an offline fallback
 src/game/types.ts           RoundState, Session, Settings, Award
 src/game/__tests__/         node:test specs for the rules
-src/content/catalog.ts      Groups → categories → subtopics → items (5 groups, 28 categories, 165 subtopics); topics.ts derives the flat list
+src/content/catalog.ts      Groups → categories → subtopics → items (5 groups, 28 categories, 195 subtopics); topics.ts derives the flat list
 src/theme/tokens.ts         Colors, radii, font families
 src/ui/                     Txt (Display / Mono / Body), Btn, Motion (Reanimated entrances, Burst, Flash),
                             Sheet, Toggle, CountingNumber, PlayerMark
