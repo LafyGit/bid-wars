@@ -122,8 +122,19 @@ export function Body({ size = 15, color = colors.ink2, ls = 0, lh = 1.4, align, 
  * Archivo Expanded Black caps average 0.93em advance minus 0.04em tracking, so k = 0.9
  * (the handoff's 0.86 runs slightly wide on device). Pair with adjustsFontSizeToFit as a guard.
  */
-/** Archivo Expanded Black caps average ~1.0em advance; 0.9 let long names spill past the edge on device. */
-export const nameSize = (name: string, max: number, fitWidth = 330) => Math.max(20, Math.min(max, Math.floor(fitWidth / (Math.max(name.length, 1) * 1.0))));
+/** Approximate advance of an Archivo Expanded Black capital, in em. Wide letters cost more, narrow ones less. */
+const capEm = (ch: string) => ('WM'.includes(ch) ? 1.3 : 'I1J'.includes(ch) ? 0.55 : ' '.includes(ch) ? 0.45 : 'QOGDHUNBCRSPAKXYZ'.includes(ch) ? 1.08 : 0.98);
+
+/**
+ * Font size that fits `name` on one line in `fitWidth` points. Player names are sized from this alone:
+ * the platform's adjustsFontSizeToFit is unreliable on iOS 27 (it shrank one name to a speck), so text
+ * that must fit uses a deterministic size instead and never relies on auto-shrinking.
+ */
+export const nameSize = (name: string, max: number, fitWidth = 330) => {
+  const text = (name || ' ').toUpperCase();
+  const em = Array.from(text).reduce((sum, ch) => sum + capEm(ch), 0) * 0.96; // tracking is negative
+  return Math.max(18, Math.min(max, Math.floor(fitWidth / Math.max(em, 1))));
+};
 
 /**
  * Auto-fit for condensed item names: min(92, floor(fitWidth / (longestWord × k))).

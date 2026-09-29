@@ -34,7 +34,7 @@ src/game/round.ts           Pure round logic: startRound, revealItem, startBiddi
 src/ai/judge.ts             AI judge (Claude via @anthropic-ai/sdk) with an offline fallback
 src/game/types.ts           RoundState, Session, Settings, Award
 src/game/__tests__/         node:test specs for the rules
-src/content/catalog.ts      Groups → categories → subtopics → items (6 groups, 27 categories, 138 subtopics); topics.ts derives the flat list
+src/content/catalog.ts      Groups → categories → subtopics → items (5 groups, 28 categories, 165 subtopics); topics.ts derives the flat list
 src/theme/tokens.ts         Colors, radii, font families
 src/ui/                     Txt (Display / Mono / Body), Btn, Motion (Reanimated entrances, Burst, Flash),
                             Sheet, Toggle, CountingNumber, PlayerMark
@@ -56,6 +56,7 @@ assets/sfx/                 Placeholder low-gain tones (swap for real cues later
 - **Open bidding.** Both players share the screen. The reducer enforces turn order, the $1 minimum raise, the
   budget cap and the 5-item cap; a pass concedes the item to the leader (or leaves it unclaimed when nobody bid).
   The optional 3-second rule (Settings) counts "going once, going twice, sold" after every bid.
+- **Judging.** The judge always picks a winner (no draws) and ranks on the quality of the picks and the best single pick, never on money left. Without an API key the built-in judge uses each item's highest bid as a demand signal; with a key Claude judges the items themselves.
 - **AI judge.** Set `EXPO_PUBLIC_ANTHROPIC_API_KEY` in `.env` (see `.env.example`) and the final screen asks
   Claude (`claude-opus-5`) for a verdict on the two collections. Without a key a built-in judge rules instead.
   The key ships inside the bundle, which is fine for a private TestFlight build; front it with a proxy before a

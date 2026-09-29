@@ -25,7 +25,7 @@ test('opener bids, other passes: sold to the leader at their bid', () => {
   const s = play(fresh(), [3, 'p']);
   assert.deepEqual(s.result, { type: 'win', w: 0, price: 3 });
   assert.deepEqual(s.budgets, [17, 20]);
-  assert.deepEqual(s.collections[0], [{ name: 'Pizza', price: 3 }]);
+  assert.deepEqual(s.collections[0], [{ name: 'Pizza', price: 3, value: 3 }]);
   assert.equal(s.log[0].contested, false);
   assert.equal(s.log[0].raises, 1);
 });

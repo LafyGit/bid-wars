@@ -28,7 +28,7 @@ test('every category belongs to exactly one group and every group member exists'
 
 test('all gaming categories sit in the Gaming group', () => {
   const gaming = GROUPS.find((g) => g.id === 'gaming')!;
-  for (const id of ['valorant', 'cs2', 'league', 'fortnite', 'minecraft', 'games', 'nintendo', 'gta', 'cod', 'apex', 'overwatch']) {
+  for (const id of ['valorant', 'cs2', 'league', 'fortnite', 'minecraft', 'games', 'nintendo', 'gta', 'cod', 'apex', 'overwatch', 'esports']) {
     assert.ok(gaming.categoryIds.includes(id), `${id} should be in Gaming`);
   }
 });

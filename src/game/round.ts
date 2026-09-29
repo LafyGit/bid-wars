@@ -92,7 +92,7 @@ function resolve(s: RoundState, res: RoundResult): RoundState {
     const budgets: Pair<number> = [s.budgets[0], s.budgets[1]];
     budgets[res.w] -= res.price;
     const collections: Pair<typeof s.collections[0]> = [s.collections[0].slice(), s.collections[1].slice()];
-    collections[res.w].push({ name: item, price: res.price });
+    collections[res.w].push({ name: item, price: res.price, value: Math.max(best[0], best[1], res.price) });
     const entry: LogEntry = { item, bids: best, w: res.w, price: res.price, contested: best[0] > 0 && best[1] > 0, raises: s.history.length, after: [budgets[0], budgets[1]] };
     return { ...base, budgets, collections, log: s.log.concat(entry) };
   }

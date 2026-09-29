@@ -47,7 +47,7 @@ export function ResultView() {
               </View>
             </Enter>
             <Enter kind="pop" delay={120} duration={460} style={{ marginTop: 12 }}>
-              <Display size={nameSize(headline, 54)} color={color} ls={-0.035} lh={1.1} align="center" numberOfLines={1} adjustsFontSizeToFit>{headline}</Display>
+              <Display size={nameSize(headline, 54, 320)} color={color} ls={-0.035} lh={1.1} align="center" numberOfLines={1}>{headline}</Display>
             </Enter>
             <Enter kind="pop" delay={240} duration={400} style={{ marginTop: 10, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 14, backgroundColor: color, maxWidth: 330 }}>
               <Display size={item.length > 22 ? 15 : item.length > 14 ? 18 : 22} wdth={90} color={colors.bg} ls={0} lh={1.1} numberOfLines={1}>{item} · ${R.price}</Display>

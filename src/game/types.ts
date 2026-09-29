@@ -23,7 +23,8 @@ export type LogEntry = {
   after: Pair<number>;
 };
 
-export type Collected = { name: string; price: number };
+/** `price` is what the winner paid; `value` is the highest bid anyone placed on it, a proxy for how much the item was wanted. */
+export type Collected = { name: string; price: number; value: number };
 
 export type RoundState = {
   topicId: string;

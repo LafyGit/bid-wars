@@ -42,13 +42,14 @@ function Judge() {
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
-    const input = { topic: topicLabel(g.topic), names: g.names, collections: r.collections, budgets: r.budgets, unclaimed: r.log.filter((l) => l.w === -1).map((l) => l.item) };
-    if (!judgeAvailable()) { setV(localVerdict(input)); return; }
-    judgeCollections(input).then((res) => alive && setV(res)).catch((e) => { if (alive) { setErr(e instanceof Error ? e.message : 'Judge unavailable'); setV(localVerdict(input)); } });
+    const input = { topic: topicLabel(g.topic), names: g.names, collections: r.collections, unclaimed: r.log.filter((l) => l.w === -1).map((l) => l.item) };
+    const tiebreak = (g.state.session.rounds % 2) as Player;
+    if (!judgeAvailable()) { setV(localVerdict(input, tiebreak)); return; }
+    judgeCollections(input).then((res) => alive && setV(res)).catch((e) => { if (alive) { setErr(e instanceof Error ? e.message : 'Judge unavailable'); setV(localVerdict(input, tiebreak)); } });
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const color = v && v.winner >= 0 ? playerColor(v.winner) : colors.ink3;
+  const color = v ? playerColor(v.winner) : colors.ink3;
   return (
     <Enter kind="in" delay={400} duration={400} style={{ marginTop: 12, borderRadius: 22, backgroundColor: colors.surface, padding: 16, borderWidth: 1.5, borderColor: v ? color : colors.line12 }}>
       <Row gap={10}>
