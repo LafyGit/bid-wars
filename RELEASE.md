@@ -12,6 +12,7 @@ Build numbers are burned on upload. Bump `expo.ios.buildNumber` in `app.json` be
 - 1.2.0 (5): uploaded 2026-09-28. Green/pink player palette, catalog cleanup, 10 new packs.
 - 1.2.1 (6): uploaded 2026-09-29. Title clipping fix (display line-height clamp), long second name on the intro screen, setup title hides under the keyboard.
 - 1.3.0 (7): uploaded 2026-09-29. Topic groups, 46 new packs (138 total), name clipping fix (trailing letter-spacing overhang).
+- 1.4.0 (8): uploaded 2026-09-29. Judge never draws and ranks on pick quality, name sizing without adjustsFontSizeToFit, Khaleeji topics removed, 165 packs.
 
 Steps (mirrors the Footies flow; Xcode account must be signed in):
 
