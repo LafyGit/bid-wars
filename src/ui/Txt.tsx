@@ -60,6 +60,9 @@ export function Display({ size = 40, color = colors.ink, ls = -0.03, lh = 0.92, 
           textTransform: upper ? 'uppercase' : undefined,
           fontVariant: tabular ? ['tabular-nums'] : undefined,
           includeFontPadding: false,
+          // iOS applies negative letter-spacing after the last glyph as well, which pushes the final
+          // letter past the text box (and iOS clips text to its box). Give that overhang room.
+          paddingRight: ls < 0 ? Math.ceil(-ls * size) + 1 : undefined,
         },
         style,
       ]}

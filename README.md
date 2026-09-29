@@ -34,7 +34,7 @@ src/game/round.ts           Pure round logic: startRound, revealItem, startBiddi
 src/ai/judge.ts             AI judge (Claude via @anthropic-ai/sdk) with an offline fallback
 src/game/types.ts           RoundState, Session, Settings, Award
 src/game/__tests__/         node:test specs for the rules
-src/content/catalog.ts      Categories → subtopics → items (92 subtopics); topics.ts derives the flat list
+src/content/catalog.ts      Groups → categories → subtopics → items (6 groups, 27 categories, 138 subtopics); topics.ts derives the flat list
 src/theme/tokens.ts         Colors, radii, font families
 src/ui/                     Txt (Display / Mono / Body), Btn, Motion (Reanimated entrances, Burst, Flash),
                             Sheet, Toggle, CountingNumber, PlayerMark
@@ -66,7 +66,8 @@ assets/sfx/                 Placeholder low-gain tones (swap for real cues later
 - **Persistence.** Names, match score, session stats and settings are stored with AsyncStorage under the
   `bidwars.*` keys from the handoff.
 - **Content.** Add a subtopic by appending to its category in `catalog.ts`; anything with fewer than 10 items is
-  skipped automatically.
+  skipped automatically. Every category must be listed in exactly one entry of `GROUPS` (the catalog test
+  enforces this, plus 10+ unique items per subtopic).
 - **Sound.** `src/fx/sound.ts` is an event bus (`reveal`, `lock`, `countdown_tick`, `win`, `tie`, `final_result`,
   `topic_spin_tick`, `topic_land`) wired to placeholder tones. Respects the Sound toggle and the silent switch.
 

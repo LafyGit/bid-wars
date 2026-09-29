@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
 import { AccessibilityInfo } from 'react-native';
-import { TOPICS, randomTopic, topicById, type Topic } from '../content/topics';
+import { GROUPS, TOPICS, groupOfCategory, randomTopic, topicById, type Topic } from '../content/topics';
 import * as R from '../game/round';
 import type { Pair, Player, RoundState, Session, Settings } from '../game/types';
 import { haptic, setHapticsEnabled } from '../fx/haptics';
@@ -9,7 +9,7 @@ import { KEYS, load, loadRaw, save } from './storage';
 
 export type Screen =
   | 'splash' | 'home' | 'howto' | 'setup' | 'topics' | 'subtopics' | 'reveal' | 'intro'
-  | 'auction' | 'final' | 'winner' | 'awards' | 'browser' | 'settings';
+  | 'auction' | 'final' | 'winner' | 'awards' | 'browser' | 'settings' | 'group';
 
 export type AppState = {
   hydrated: boolean;
@@ -21,6 +21,7 @@ export type AppState = {
   score: Pair<number>;
   session: Session;
   settings: Settings;
+  groupId: string;
   categoryId: string;
   topicId: string;
   round: RoundState | null;
@@ -45,6 +46,7 @@ const initial: AppState = {
   score: [0, 0],
   session: R.newSession(),
   settings: DEFAULT_SETTINGS,
+  groupId: GROUPS[0].id,
   categoryId: TOPICS[0].categoryId,
   topicId: TOPICS[0].id,
   round: null,
@@ -67,6 +69,7 @@ type Action =
   | { type: 'setting'; key: keyof Settings; value: boolean }
   | { type: 'resetConfirm'; on: boolean }
   | { type: 'resetScore' }
+  | { type: 'group'; id: string }
   | { type: 'category'; id: string }
   | { type: 'spin'; topicId: string; idx: number; landed: boolean }
   | { type: 'spinTick'; idx: number; landed: boolean }
@@ -86,7 +89,8 @@ function reducer(s: AppState, a: Action): AppState {
     case 'setting': return { ...s, settings: { ...s.settings, [a.key]: a.value } };
     case 'resetConfirm': return { ...s, confirmReset: a.on };
     case 'resetScore': return { ...s, score: [0, 0], session: R.newSession(), confirmReset: false };
-    case 'category': return { ...s, categoryId: a.id, screen: 'subtopics', menu: false, collOpen: false };
+    case 'group': return { ...s, groupId: a.id, screen: 'group', menu: false, collOpen: false };
+    case 'category': return { ...s, categoryId: a.id, groupId: groupOfCategory(a.id).id, screen: 'subtopics', menu: false, collOpen: false };
     case 'spin': return { ...s, topicId: a.topicId, reveal: { idx: a.idx, landed: a.landed }, screen: 'reveal', menu: false, collOpen: false };
     case 'spinTick': return { ...s, reveal: { idx: a.idx, landed: a.landed } };
     case 'round': return { ...s, round: a.round };
@@ -110,6 +114,7 @@ export type Game = {
   toggleSound: () => void;
   setSetting: (k: keyof Settings, v: boolean) => void;
   resetScore: () => void;
+  openGroup: (id: string) => void;
   openCategory: (id: string) => void;
   startRandom: () => void;
   chooseTopic: (id: string) => void;
@@ -238,6 +243,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         save(KEYS.score, [0, 0]); save(KEYS.session, R.newSession());
         dispatch({ type: 'resetScore' });
       },
+      openGroup: (id) => { haptic('nav'); dispatch({ type: 'group', id }); },
       openCategory: (id) => { haptic('nav'); dispatch({ type: 'category', id }); },
       startRandom: () => {
         clearTimers();
