@@ -13,7 +13,7 @@ function RowBtn({ label, right, color = colors.ink, onPress, hint }: { label: st
   return (
     <Pressable accessibilityRole="button" accessibilityHint={hint} onPress={onPress} style={({ pressed }) => ({ height: 60, borderRadius: 18, backgroundColor: pressed ? colors.surfaceHover : colors.surface, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 })}>
       <Body size={16} weight={700} color={color}>{label}</Body>
-      <View style={{ flexShrink: 1 }}><FitText kind="body" text={right} size={14} minSize={10} maxLines={2} color={colors.ink4} align="right" /></View>
+      <View style={{ flexShrink: 1 }}><FitText kind="body" text={right} size={14} minSize={10} maxLines={2} fitWidth={200} color={colors.ink4} align="right" /></View>
     </Pressable>
   );
 }

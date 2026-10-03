@@ -28,7 +28,7 @@ export function Winner() {
         <Burst color={color} seed={g.state.winnerBurst} />
         <Enter kind="fade"><Mono size={12} color={colors.ink2} ls={0.18}>ROUND {g.state.lastRound} · {topicLabel(g.topic)}</Mono></Enter>
         <Enter kind="pop" duration={520} style={{ marginTop: 12 }}>
-          <FitText text={name} size={nameSize(name, 96, width - 56)} minSize={20} maxLines={2} color={color} ls={-0.04} lh={1.1} align="center" accessibilityLiveRegion="assertive" />
+          <FitText text={name} size={nameSize(name, 96, width - 56)} minSize={20} maxLines={2} fitWidth={width - 56} color={color} ls={-0.04} lh={1.1} align="center" accessibilityLiveRegion="assertive" />
         </Enter>
         <Enter kind="in" delay={200} duration={360}><Display size={26} ls={-0.01} lh={1.1} style={{ marginTop: 6 }}>WINS THE ROUND</Display></Enter>
       </View>

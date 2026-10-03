@@ -47,10 +47,10 @@ export function ResultView() {
               </View>
             </Enter>
             <Enter kind="pop" delay={120} duration={460} style={{ marginTop: 12 }}>
-              <FitText text={headline} size={nameSize(headline, 54, 320)} minSize={16} maxLines={2} color={color} ls={-0.035} lh={1.1} align="center" />
+              <FitText text={headline} size={nameSize(headline, 54, 320)} minSize={16} maxLines={2} fitWidth={320} color={color} ls={-0.035} lh={1.1} align="center" />
             </Enter>
             <Enter kind="pop" delay={240} duration={400} style={{ marginTop: 10, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 14, backgroundColor: color, maxWidth: 330 }}>
-              <FitText text={`${item} · $${R.price}`} size={item.length > 22 ? 15 : item.length > 14 ? 18 : 22} minSize={11} maxLines={2} wdth={90} color={colors.bg} ls={0} lh={1.1} align="center" />
+              <FitText text={`${item} · $${R.price}`} size={item.length > 22 ? 15 : item.length > 14 ? 18 : 22} minSize={11} maxLines={2} fitWidth={294} wdth={90} color={colors.bg} ls={0} lh={1.1} align="center" />
             </Enter>
             <Enter kind="in" delay={340} duration={300} style={{ marginTop: 18, flexDirection: 'row', alignItems: 'baseline', gap: 10 }}>
               <Mono ls={0.12}>BUDGET</Mono>

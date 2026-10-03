@@ -151,7 +151,7 @@ export const itemSize = (item: string, fitWidth = 290) => {
   return Math.max(28, Math.min(92, Math.floor(fitWidth / (maxWord * 0.6))));
 };
 
-type FitProps = Omit<TextProps, 'children' | 'numberOfLines'> & Omit<Base, 'size'> & { kind?: 'display' | 'body' | 'mono'; text: string; size: number; minSize?: number; maxLines?: number; maxHeight?: number; wdth?: Wdth; weight?: any };
+type FitProps = Omit<TextProps, 'children' | 'numberOfLines'> & Omit<Base, 'size'> & { kind?: 'display' | 'body' | 'mono'; text: string; size: number; minSize?: number; maxLines?: number; maxHeight?: number; /** Available width when the parent shrink-wraps its content (so measuring the container would feed back on itself). */ fitWidth?: number; wdth?: Wdth; weight?: any };
 
 /** Break points a wrapping Text may use: whitespace, and just after a hyphen. */
 const pieces = (text: string) => text.split(/\s+/).filter(Boolean).flatMap((w) => w.match(/[^-]+-?|-/g) ?? [w]);
@@ -163,10 +163,11 @@ const pieces = (text: string) => text.split(/\s+/).filter(Boolean).flatMap((w) =
  * lines. It does not rely on adjustsFontSizeToFit (unreliable on iOS 27) or on text-layout events, and
  * it only ellipsizes if it has already reached `minSize`.
  */
-function FitInner({ kind = 'display', text, size, minSize = 11, maxLines = 1, maxHeight, ...rest }: FitProps) {
+function FitInner({ kind = 'display', text, size, minSize = 11, maxLines = 1, maxHeight, fitWidth, ...rest }: FitProps) {
   const Comp: any = kind === 'display' ? Display : kind === 'mono' ? Mono : Body;
   const parts = React.useMemo(() => (maxLines === 1 ? [text] : pieces(text)), [text, maxLines]);
-  const [w, setW] = React.useState(0);
+  const [wMeasured, setW] = React.useState(0);
+  const w = fitWidth ?? wMeasured;
   const widths = React.useRef<number[]>([]);
   const [measured, setMeasured] = React.useState(0);
   const [s, setS] = React.useState(size);
@@ -197,7 +198,7 @@ function FitInner({ kind = 'display', text, size, minSize = 11, maxLines = 1, ma
   };
 
   return (
-    <View onLayout={(e) => setW(Math.floor(e.nativeEvent.layout.width))} style={{ alignSelf: 'stretch' }}>
+    <View onLayout={fitWidth ? undefined : (e) => setW(Math.floor(e.nativeEvent.layout.width))} style={fitWidth ? { maxWidth: fitWidth } : { alignSelf: 'stretch' }}>
       <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ position: 'absolute', left: 0, top: 0, width: 4000, flexDirection: 'row', opacity: 0 }}>
         {parts.map((part, i) => (
           <Comp key={i} {...rest} size={base.current} style={undefined} onLayout={(e: any) => { widths.current[i] = e.nativeEvent.layout.width; setMeasured((m) => Math.max(m, widths.current.filter((x) => x != null).length)); }}>{part}</Comp>
@@ -209,5 +210,5 @@ function FitInner({ kind = 'display', text, size, minSize = 11, maxLines = 1, ma
 }
 
 export function FitText(props: FitProps) {
-  return <FitInner key={`${props.text}|${props.size}|${props.maxLines ?? 1}|${props.maxHeight ?? ''}`} {...props} />;
+  return <FitInner key={`${props.text}|${props.size}|${props.maxLines ?? 1}|${props.maxHeight ?? ''}|${props.fitWidth ?? ''}`} {...props} />;
 }

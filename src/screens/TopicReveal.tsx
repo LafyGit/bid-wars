@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, View, useWindowDimensions } from 'react-native';
 import Animated, { Easing, FadeIn, Keyframe, interpolate, useAnimatedReaction, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming, Extrapolation, type SharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { TOPICS } from '../content/topics';
@@ -16,7 +16,7 @@ const ROW_H = 96;
 const WINDOW_H = ROW_H * 3;
 const SPIN_MS = 3300;
 
-const fontFor = (title: string) => Math.min(64, Math.floor(330 / (title.length * 0.86)));
+const fontFor = (title: string) => (title.length > 12 ? 44 : 64);
 
 function Row({ i, y, title, size, color }: { i: number; y: SharedValue<number>; title: string; size: number; color: string }) {
   const st = useAnimatedStyle(() => {
@@ -28,7 +28,7 @@ function Row({ i, y, title, size, color }: { i: number; y: SharedValue<number>; 
   });
   return (
     <Animated.View style={[{ position: 'absolute', left: 0, right: 0, top: i * ROW_H, height: ROW_H, alignItems: 'center', justifyContent: 'center' }, st]}>
-      <Display size={size} ls={-0.04} lh={0.9} align="center" color={color} numberOfLines={1} adjustsFontSizeToFit>{title}</Display>
+      <View style={{ width: '100%', paddingHorizontal: 20 }}><FitText text={title} size={size} minSize={20} maxLines={2} maxHeight={ROW_H - 6} ls={-0.04} lh={1} align="center" color={color} /></View>
     </Animated.View>
   );
 }
@@ -77,6 +77,7 @@ function Reel({ reel, spin, landed, accent, onLand }: { reel: number[]; spin: bo
 
 export function TopicReveal() {
   const g = useGame();
+  const { width } = useWindowDimensions();
   const { idx, landed, reel } = g.state.reveal;
   const t = TOPICS[idx] ?? TOPICS[0];
   const spinning = !!reel && reel.length > 1 && !g.rm;
@@ -98,7 +99,7 @@ export function TopicReveal() {
         )}
         <View style={{ minHeight: 56, marginTop: 6, alignItems: 'center', justifyContent: 'center' }}>
           {landed && (
-            <Enter kind="pop" style={{ paddingHorizontal: 24 }}><FitText text={t.title} size={22} minSize={13} maxLines={2} wdth={110} weight={800} ls={0.04} lh={1.2} align="center" /></Enter>
+            <Enter kind="pop" style={{ paddingHorizontal: 24 }}><FitText text={t.title} size={22} minSize={13} maxLines={2} fitWidth={width - 48} wdth={110} weight={800} ls={0.04} lh={1.2} align="center" /></Enter>
           )}
         </View>
       </View>
