@@ -26,7 +26,7 @@ function Offer({ title, tagline, accent, price, owned, available, featured, onBu
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <View style={{ flex: 1 }}>
             {featured && <Mono size={10} color={accent} ls={0.16}>BEST VALUE</Mono>}
-            <Display size={21} wdth={112} upper={false} ls={-0.01} lh={1.1} numberOfLines={1}>{title}</Display>
+            <Display size={19} wdth={112} upper={false} ls={-0.01} lh={1.15} numberOfLines={2}>{title}</Display>
             <Body size={13} color={colors.ink3} style={{ marginTop: 4 }}>{tagline}</Body>
           </View>
           <View style={{ minWidth: 84, height: 44, paddingHorizontal: 14, borderRadius: 14, backgroundColor: owned ? colors.line12 : accent, alignItems: 'center', justifyContent: 'center' }}>

@@ -1,6 +1,6 @@
 # Bid Wars
 
-A two-player, one-phone auction party game. Each round: $20 of fake money each, 10 hidden items from one subtopic, and open back-and-forth bidding: raise by at least $1 or pass. A player can win at most 5 items. After ten items the players compare collections, hear the AI judge's opinion, and decide the winner themselves.
+A two-player, one-phone auction party game. Each round: $20 of fake money each, 10 hidden items from one subtopic, and open back-and-forth bidding: raise by at least $1 or pass. A player can win at most 5 items. After ten items the players compare collections, hear the judge's opinion, and decide the winner themselves.
 
 Built with React Native + Expo (TypeScript) from the V1 design handoff.
 

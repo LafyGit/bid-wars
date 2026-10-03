@@ -12,7 +12,7 @@ const RULES: [string, string][] = [
   ['10 hidden items', 'Items from one subtopic appear one at a time. Nobody knows what’s next.'],
   ['Bid back and forth', 'Take turns raising by at least $1. Pass to let the other player have it at their bid.'],
   ['Max 5 items', 'A full shelf can’t bid. Going once, going twice, sold: turn on the 3-second rule in Settings.'],
-  ['You be the judge', 'After ten items, compare collections. The AI judge weighs in, but you decide.'],
+  ['You be the judge', 'After ten items, compare collections. The judge weighs in, but you decide.'],
 ];
 
 export function HowToPlay() {

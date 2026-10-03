@@ -42,9 +42,9 @@ export function Topics() {
                 accessibilityRole="button"
                 accessibilityLabel={`${gr.title}. ${gr.subtitle}. ${gr.categories.length} categories, ${gr.topicCount} packs`}
                 onPress={() => g.openGroup(gr.id)}
-                style={({ pressed }) => ({ height: 150, borderRadius: 22, backgroundColor: pressed ? '#1C1D22' : colors.surfaceAlt, padding: 16, justifyContent: 'flex-end', overflow: 'hidden', transform: [{ scale: pressed ? 0.97 : 1 }] })}
+                style={({ pressed }) => ({ height: 172, borderRadius: 22, backgroundColor: pressed ? '#1C1D22' : colors.surfaceAlt, padding: 16, justifyContent: 'flex-end', overflow: 'hidden', transform: [{ scale: pressed ? 0.97 : 1 }] })}
               >
-                <View style={{ position: 'absolute', right: -34, top: -34, width: 112, height: 112, borderRadius: 56, backgroundColor: gr.accent }} />
+                <View style={{ position: 'absolute', right: -30, top: -30, width: 88, height: 88, borderRadius: 44, backgroundColor: gr.accent }} />
                 <Display size={19} wdth={112} upper={false} ls={-0.01} lh={1.1} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>{gr.title}</Display>
                 <Body size={12} color={colors.ink3} lh={1.3} style={{ marginTop: 3 }} numberOfLines={2}>{gr.subtitle}</Body>
                 <Mono size={10} color={gr.accent} ls={0.12} style={{ marginTop: 8 }}>{(() => { const open = gr.categories.filter((c) => categoryUnlocked(c.id, g.state.owned)).reduce((n, c) => n + c.topics.length, 0); return open === gr.topicCount ? `${gr.topicCount} PACKS` : `${open} / ${gr.topicCount} OPEN`; })()}</Mono>
