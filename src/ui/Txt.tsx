@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, type TextProps, type TextStyle } from 'react-native';
+import { Text, View, type TextProps, type TextStyle } from 'react-native';
 import { colors, fonts } from '../theme/tokens';
 
 export type Wdth = 125 | 118 | 115 | 112 | 110 | 100 | 90 | 88 | 80 | 75;
@@ -48,6 +48,7 @@ export function Display({ size = 40, color = colors.ink, ls = -0.03, lh = 0.92, 
   return (
     <Text
       {...rest}
+      selectable={false}
       allowFontScaling={false}
       style={[
         {
@@ -60,6 +61,7 @@ export function Display({ size = 40, color = colors.ink, ls = -0.03, lh = 0.92, 
           textTransform: upper ? 'uppercase' : undefined,
           fontVariant: tabular ? ['tabular-nums'] : undefined,
           includeFontPadding: false,
+          userSelect: 'none',
           // iOS applies negative letter-spacing after the last glyph as well, which pushes the final
           // letter past the text box (and iOS clips text to its box). Give that overhang room.
           paddingRight: ls < 0 ? Math.ceil(-ls * size) + 1 : undefined,
@@ -75,6 +77,7 @@ export function Mono({ size = 11, color = colors.ink3, ls = 0.14, lh = 1.3, alig
   return (
     <Text
       {...rest}
+      selectable={false}
       maxFontSizeMultiplier={1.3}
       style={[
         {
@@ -86,6 +89,7 @@ export function Mono({ size = 11, color = colors.ink3, ls = 0.14, lh = 1.3, alig
           textAlign: align,
           textTransform: upper ? 'uppercase' : undefined,
           includeFontPadding: false,
+          userSelect: 'none',
         },
         style,
       ]}
@@ -98,6 +102,7 @@ export function Body({ size = 15, color = colors.ink2, ls = 0, lh = 1.4, align, 
   return (
     <Text
       {...rest}
+      selectable={false}
       maxFontSizeMultiplier={1.4}
       style={[
         {
@@ -110,6 +115,7 @@ export function Body({ size = 15, color = colors.ink2, ls = 0, lh = 1.4, align, 
           textTransform: upper ? 'uppercase' : undefined,
           fontVariant: tabular ? ['tabular-nums'] : undefined,
           includeFontPadding: false,
+          userSelect: 'none',
         },
         style,
       ]}
@@ -144,3 +150,64 @@ export const itemSize = (item: string, fitWidth = 290) => {
   const maxWord = Math.max(...item.split(/[\s-]/).map((w) => w.length), 1);
   return Math.max(28, Math.min(92, Math.floor(fitWidth / (maxWord * 0.6))));
 };
+
+type FitProps = Omit<TextProps, 'children' | 'numberOfLines'> & Omit<Base, 'size'> & { kind?: 'display' | 'body' | 'mono'; text: string; size: number; minSize?: number; maxLines?: number; maxHeight?: number; wdth?: Wdth; weight?: any };
+
+/** Break points a wrapping Text may use: whitespace, and just after a hyphen. */
+const pieces = (text: string) => text.split(/\s+/).filter(Boolean).flatMap((w) => w.match(/[^-]+-?|-/g) ?? [w]);
+
+/**
+ * Text that always shows in full and never breaks inside a word. It measures the widest unbreakable
+ * piece (or the whole string when maxLines is 1) with an invisible copy, scales the font so that piece
+ * fits the available width, then checks the real height and steps down again if it needs too many
+ * lines. It does not rely on adjustsFontSizeToFit (unreliable on iOS 27) or on text-layout events, and
+ * it only ellipsizes if it has already reached `minSize`.
+ */
+function FitInner({ kind = 'display', text, size, minSize = 11, maxLines = 1, maxHeight, ...rest }: FitProps) {
+  const Comp: any = kind === 'display' ? Display : kind === 'mono' ? Mono : Body;
+  const parts = React.useMemo(() => (maxLines === 1 ? [text] : pieces(text)), [text, maxLines]);
+  const [w, setW] = React.useState(0);
+  const widths = React.useRef<number[]>([]);
+  const [measured, setMeasured] = React.useState(0);
+  const [s, setS] = React.useState(size);
+  const [ok, setOk] = React.useState(false);
+  const base = React.useRef(size);
+  const lhMul = rest.lh ?? (kind === 'display' ? 1 : kind === 'mono' ? 1.3 : 1.4);
+
+  // Step 1: width fit, from the widest piece measured at the base size.
+  React.useEffect(() => {
+    if (!w || measured < parts.length) return;
+    const widest = Math.max(...widths.current.slice(0, parts.length), 1);
+    const fit = Math.floor(base.current * (w / widest) * 0.98);
+    setS(Math.max(minSize, Math.min(size, fit)));
+  }, [w, measured, parts.length, size, minSize]);
+
+  React.useEffect(() => {
+    const t = setTimeout(() => setOk(true), 500); // never leave text hidden
+    return () => clearTimeout(t);
+  }, []);
+
+  const lineH = Math.max(1, Math.round(s * (kind === 'display' ? Math.max(lhMul, MIN_DISPLAY_LH) : lhMul)));
+  // Step 2: height fit, from the visible text's real height.
+  const onTextBox = (h: number) => {
+    if (!w || measured < parts.length) return;
+    const tooTall = h > lineH * maxLines + 2 || (maxHeight != null && h > maxHeight);
+    if (tooTall && s > minSize) setS(Math.max(minSize, Math.floor(s * 0.92)));
+    else setOk(true);
+  };
+
+  return (
+    <View onLayout={(e) => setW(Math.floor(e.nativeEvent.layout.width))} style={{ alignSelf: 'stretch' }}>
+      <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ position: 'absolute', left: 0, top: 0, width: 4000, flexDirection: 'row', opacity: 0 }}>
+        {parts.map((part, i) => (
+          <Comp key={i} {...rest} size={base.current} style={undefined} onLayout={(e: any) => { widths.current[i] = e.nativeEvent.layout.width; setMeasured((m) => Math.max(m, widths.current.filter((x) => x != null).length)); }}>{part}</Comp>
+        ))}
+      </View>
+      <Comp {...rest} size={s} numberOfLines={s <= minSize ? maxLines : undefined} onLayout={(e: any) => onTextBox(e.nativeEvent.layout.height)} style={[rest.style as any, { opacity: ok ? 1 : 0 }]}>{text}</Comp>
+    </View>
+  );
+}
+
+export function FitText(props: FitProps) {
+  return <FitInner key={`${props.text}|${props.size}|${props.maxLines ?? 1}|${props.maxHeight ?? ''}`} {...props} />;
+}

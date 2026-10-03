@@ -6,7 +6,7 @@ import { colors, playerColor } from '../theme/tokens';
 import { CTA, Outline, TextLink } from '../ui/Btn';
 import { Enter } from '../ui/Motion';
 import { Row, Screen } from '../ui/Screen';
-import { Body, Display, Mono } from '../ui/Txt';
+import { Body, Display, Mono, FitText } from '../ui/Txt';
 
 export function Awards() {
   const g = useGame();
@@ -24,7 +24,7 @@ export function Awards() {
             </View>
             <View style={{ flex: 1 }}>
               <Mono size={10}>{a.title}</Mono>
-              <Display size={19} wdth={115} ls={-0.01} lh={1.1} style={{ marginTop: 2 }} numberOfLines={1}>{g.names[a.w]}</Display>
+              <FitText text={g.names[a.w]} size={19} minSize={12} wdth={115} ls={-0.01} lh={1.1} style={{ marginTop: 2 }} />
               <Body size={13} color={colors.ink3} style={{ marginTop: 2 }}>{a.desc}</Body>
             </View>
           </Enter>

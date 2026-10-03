@@ -8,7 +8,7 @@ import { colors, layout } from '../theme/tokens';
 import { TextLink } from '../ui/Btn';
 import { Enter } from '../ui/Motion';
 import { Screen, useScreenInsets } from '../ui/Screen';
-import { Body, Display, Mono } from '../ui/Txt';
+import { Body, Display, Mono, FitText } from '../ui/Txt';
 
 /** One group (Gaming, Sports & Cars, ...) and the categories inside it. */
 export function Group() {
@@ -52,8 +52,8 @@ export function Group() {
             >
               <View style={{ width: 10, height: 44, borderRadius: 5, backgroundColor: c.accent }} />
               <View style={{ flex: 1 }}>
-                <Display size={18} wdth={112} upper={false} ls={0} lh={1.1} numberOfLines={1}>{c.title}</Display>
-                <Body size={13} color={colors.ink3} style={{ marginTop: 2 }} numberOfLines={1}>{c.subtitle}</Body>
+                <FitText text={c.title} size={18} minSize={12} maxLines={2} wdth={112} upper={false} ls={0} lh={1.1} />
+                <Body size={13} color={colors.ink3} style={{ marginTop: 2 }}>{c.subtitle}</Body>
               </View>
               {categoryUnlocked(c.id, owned)
                 ? <Mono size={10} ls={0.1} lh={1.5} align="right">{c.free ? 'FREE\nPLAY →' : 'OPEN\nPLAY →'}</Mono>

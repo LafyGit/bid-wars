@@ -3,7 +3,7 @@ import { Pressable, View } from 'react-native';
 import { suggest, type DecideCopy, type SuggestPool, type Suggestion } from '../content/decide';
 import { colors, withAlpha } from '../theme/tokens';
 import { Enter } from './Motion';
-import { Body, Display, Mono } from './Txt';
+import { Body, Display, Mono, FitText } from './Txt';
 import { Row } from './Screen';
 
 /** Entry card on a category screen: "Can't decide?" */
@@ -38,7 +38,7 @@ export function DecideSheet({ copy, accent, pool, onClose }: { copy: DecideCopy;
           {current ? (
             <Enter key={current.item} kind="pop" duration={360} style={{ marginTop: 10, gap: 6 }}>
               <Mono color={colors.ink4}>{copy.verb.toUpperCase()}</Mono>
-              <Display size={34} wdth={100} color={colors.ink} ls={-0.02} lh={1.1} numberOfLines={3} upper={false}>{current.item}</Display>
+              <FitText text={current.item} size={34} minSize={18} maxLines={4} wdth={100} color={colors.ink} ls={-0.02} lh={1.1} upper={false} />
               <Body size={13} color={colors.ink3}>From {current.from}</Body>
             </Enter>
           ) : (

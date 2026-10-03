@@ -7,7 +7,7 @@ import { colors, layout } from '../theme/tokens';
 import { TextLink } from '../ui/Btn';
 import { Enter } from '../ui/Motion';
 import { Screen, useScreenInsets } from '../ui/Screen';
-import { Body, Display, Mono } from '../ui/Txt';
+import { Body, Display, Mono, FitText } from '../ui/Txt';
 
 /** Screen 05: RANDOM hero, then the big categories. Tapping one opens its subtopics. */
 export function Topics() {
@@ -45,8 +45,8 @@ export function Topics() {
                 style={({ pressed }) => ({ height: 172, borderRadius: 22, backgroundColor: pressed ? '#1C1D22' : colors.surfaceAlt, padding: 16, justifyContent: 'flex-end', overflow: 'hidden', transform: [{ scale: pressed ? 0.97 : 1 }] })}
               >
                 <View style={{ position: 'absolute', right: -30, top: -30, width: 88, height: 88, borderRadius: 44, backgroundColor: gr.accent }} />
-                <Display size={19} wdth={112} upper={false} ls={-0.01} lh={1.1} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>{gr.title}</Display>
-                <Body size={12} color={colors.ink3} lh={1.3} style={{ marginTop: 3 }} numberOfLines={2}>{gr.subtitle}</Body>
+                <FitText text={gr.title} size={19} minSize={13} maxLines={2} wdth={112} upper={false} ls={-0.01} lh={1.1} />
+                <View style={{ marginTop: 3 }}><FitText kind="body" text={gr.subtitle} size={12} minSize={9} maxLines={3} color={colors.ink3} lh={1.3} /></View>
                 <Mono size={10} color={gr.accent} ls={0.12} style={{ marginTop: 8 }}>{gr.categories.some((c) => !categoryUnlocked(c.id, g.state.owned)) ? 'MORE TO UNLOCK' : 'ALL UNLOCKED'}</Mono>
               </Pressable>
             </Enter>

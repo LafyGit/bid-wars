@@ -7,7 +7,7 @@ import { colors, radii } from '../../theme/tokens';
 import { CTA } from '../../ui/Btn';
 import { EASE_FLIP, Enter, Float, Pulse } from '../../ui/Motion';
 import { Row } from '../../ui/Screen';
-import { Body, Display, Mono, itemSize } from '../../ui/Txt';
+import { Body, Display, FitText, Mono, itemSize } from '../../ui/Txt';
 
 /** Faint 135° stripe texture for the hidden face. */
 function Stripes() {
@@ -25,6 +25,7 @@ export function HiddenCard() {
   const g = useGame();
   const r = g.state.round!;
   const { width } = useWindowDimensions();
+  const [boxH, setBoxH] = React.useState(0);
   const accent = g.topic.accent;
   const flipped = r.phase !== 'hidden';
   const rot = useSharedValue(flipped ? 180 : 0);
@@ -68,8 +69,8 @@ export function HiddenCard() {
                   <Mono color={colors.bg}>NO. {no}</Mono>
                   <Mono color={colors.bg}>{topicLabel(g.topic)}</Mono>
                 </Row>
-                <View style={{ flex: 1, justifyContent: 'center' }}>
-                  <Display size={itemSize(item, width - 100)} wdth={75} color={colors.bg} ls={-0.01} lh={0.9} adjustsFontSizeToFit numberOfLines={4}>{item}</Display>
+                <View style={{ flex: 1, justifyContent: 'center' }} onLayout={(e) => setBoxH(e.nativeEvent.layout.height)}>
+                  <FitText text={item} size={itemSize(item, width - 100)} minSize={18} maxLines={6} maxHeight={boxH ? boxH - 8 : undefined} wdth={75} color={colors.bg} ls={-0.01} lh={1} />
                 </View>
                 <Row justify="space-between" align="flex-end">
                   <Mono color={colors.bg}>UP FOR AUCTION</Mono>

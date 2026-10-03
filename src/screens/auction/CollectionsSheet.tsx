@@ -5,7 +5,7 @@ import { colors, playerColor } from '../../theme/tokens';
 import { TextLink } from '../../ui/Btn';
 import { Row } from '../../ui/Screen';
 import { Sheet } from '../../ui/Sheet';
-import { Body, Display, Mono } from '../../ui/Txt';
+import { Body, Display, Mono, FitText } from '../../ui/Txt';
 import type { Player } from '../../game/types';
 
 /** Screen 08 bottom strip: "COLLECTIONS · Lafy 1 · Dhari 2 ▲". */
@@ -40,7 +40,7 @@ function Column({ p }: { p: Player }) {
       <Mono color={playerColor(p)} ls={0.12} numberOfLines={1} style={{ paddingBottom: 8, borderBottomWidth: 2, borderBottomColor: playerColor(p) }}>{g.names[p]} · ${budget} LEFT</Mono>
       {coll.map((c, i) => (
         <Row key={`${c.name}-${i}`} justify="space-between" gap={6} style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line07 }}>
-          <Body size={15} weight={600} color={colors.ink} style={{ flex: 1 }} numberOfLines={1}>{c.name}</Body>
+          <View style={{ flex: 1 }}><FitText kind="body" text={c.name} size={15} minSize={10} maxLines={2} weight={600} color={colors.ink} /></View>
           <Body size={15} weight={600} color={colors.ink3} tabular>${c.price}</Body>
         </Row>
       ))}

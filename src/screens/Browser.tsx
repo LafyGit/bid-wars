@@ -7,7 +7,7 @@ import { colors, layout } from '../theme/tokens';
 import { TextLink } from '../ui/Btn';
 import { Enter } from '../ui/Motion';
 import { Screen, useScreenInsets } from '../ui/Screen';
-import { Body, Display, Mono } from '../ui/Txt';
+import { Body, Display, Mono, FitText } from '../ui/Txt';
 
 /** Topic packs browser: categories expand into subtopics. Never lists the items. */
 export function Browser() {
@@ -36,8 +36,8 @@ export function Browser() {
                   <Display size={20} color={colors.bg} ls={0} lh={1.1}>?</Display>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Display size={18} wdth={112} upper={false} ls={0} lh={1.1} numberOfLines={1}>{gr.title}</Display>
-                  <Body size={13} color={colors.ink3} style={{ marginTop: 2 }} numberOfLines={1}>{gr.subtitle}</Body>
+                  <FitText text={gr.title} size={18} minSize={12} maxLines={2} wdth={112} upper={false} ls={0} lh={1.1} />
+                  <Body size={13} color={colors.ink3} style={{ marginTop: 2 }}>{gr.subtitle}</Body>
                 </View>
                 <Mono size={10} ls={0.1} lh={1.5} align="right">{isOpen ? '▲' : '▼'}</Mono>
               </Pressable>
@@ -50,8 +50,8 @@ export function Browser() {
                         <Pressable key={t.id} accessibilityRole="button" onPress={() => g.chooseTopic(t.id)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 14, backgroundColor: pressed ? '#1C1D22' : colors.surfaceAlt })}>
                           <View style={{ width: 6, height: 26, borderRadius: 3, backgroundColor: c.accent }} />
                           <View style={{ flex: 1 }}>
-                            <Body size={15} weight={700} color={colors.ink} numberOfLines={1}>{t.title}</Body>
-                            <Body size={12} color={colors.ink4} numberOfLines={1}>{t.subtitle}</Body>
+                            <FitText kind="body" text={t.title} size={15} minSize={11} maxLines={2} weight={700} color={colors.ink} />
+                            <Body size={12} color={colors.ink4}>{t.subtitle}</Body>
                           </View>
                           <Mono size={10} ls={0.1} color={categoryUnlocked(c.id, g.state.owned) ? colors.ink3 : gr.accent}>{categoryUnlocked(c.id, g.state.owned) ? 'PLAY →' : 'LOCKED'}</Mono>
                         </Pressable>

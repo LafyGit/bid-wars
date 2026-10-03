@@ -6,7 +6,7 @@ import { colors, playerColor } from '../theme/tokens';
 import { CTA } from '../ui/Btn';
 import { Burst, Enter, Flash } from '../ui/Motion';
 import { Row, Screen } from '../ui/Screen';
-import { Body, Display, Mono, nameSize } from '../ui/Txt';
+import { Body, Display, Mono, nameSize, FitText } from '../ui/Txt';
 
 export function Winner() {
   const g = useGame();
@@ -28,7 +28,7 @@ export function Winner() {
         <Burst color={color} seed={g.state.winnerBurst} />
         <Enter kind="fade"><Mono size={12} color={colors.ink2} ls={0.18}>ROUND {g.state.lastRound} · {topicLabel(g.topic)}</Mono></Enter>
         <Enter kind="pop" duration={520} style={{ marginTop: 12 }}>
-          <Display size={nameSize(name, 96, width - 56)} color={color} ls={-0.04} lh={1.1} align="center" numberOfLines={1} accessibilityLiveRegion="assertive">{name}</Display>
+          <FitText text={name} size={nameSize(name, 96, width - 56)} minSize={20} maxLines={2} color={color} ls={-0.04} lh={1.1} align="center" accessibilityLiveRegion="assertive" />
         </Enter>
         <Enter kind="in" delay={200} duration={360}><Display size={26} ls={-0.01} lh={1.1} style={{ marginTop: 6 }}>WINS THE ROUND</Display></Enter>
       </View>

@@ -6,7 +6,7 @@ import { colors, withAlpha } from '../theme/tokens';
 import { CTA } from '../ui/Btn';
 import { Enter } from '../ui/Motion';
 import { Row, Screen } from '../ui/Screen';
-import { Display, Mono, nameSize } from '../ui/Txt';
+import { Display, Mono, nameSize, FitText } from '../ui/Txt';
 
 function Tile({ big, label, delay }: { big: string; label: string; delay: number }) {
   return (
@@ -33,13 +33,13 @@ export function MatchIntro() {
       </Row>
       <View style={{ flex: 1, justifyContent: 'center', gap: 4 }}>
         {/* Sizes come from nameSize(); no auto-shrink, which misbehaves on iOS 27. */}
-        <Enter kind="left" duration={460} style={{ width: '100%' }}><Display size={nameSize(n1, 84, fit)} color={colors.p1} ls={-0.04} lh={1.1} numberOfLines={1}>{n1}</Display></Enter>
+        <Enter kind="left" duration={460} style={{ width: '100%' }}><FitText text={n1} size={nameSize(n1, 84, fit)} minSize={20} maxLines={2} color={colors.p1} ls={-0.04} lh={1.1} /></Enter>
         <Enter kind="pop" delay={300} duration={400} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginVertical: 10 }}>
           <View style={{ flex: 1, height: 2, backgroundColor: colors.line20 }} />
           <Display size={26} ls={0} lh={1.1}>VS</Display>
           <View style={{ flex: 1, height: 2, backgroundColor: colors.line20 }} />
         </Enter>
-        <Enter kind="right" delay={120} duration={460} style={{ width: '100%' }}><Display size={nameSize(n2, 84, fit)} color={colors.p2} ls={-0.04} lh={1.1} align="right" numberOfLines={1}>{n2}</Display></Enter>
+        <Enter kind="right" delay={120} duration={460} style={{ width: '100%' }}><FitText text={n2} size={nameSize(n2, 84, fit)} minSize={20} maxLines={2} color={colors.p2} ls={-0.04} lh={1.1} align="right" /></Enter>
         <Row gap={10} style={{ marginTop: 34 }}>
           <Tile big="$20" label="EACH" delay={480} />
           <Tile big="10" label="HIDDEN ITEMS" delay={520} />

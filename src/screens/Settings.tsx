@@ -7,13 +7,13 @@ import { colors } from '../theme/tokens';
 import { TextLink } from '../ui/Btn';
 import { Screen } from '../ui/Screen';
 import { ToggleRow } from '../ui/Toggle';
-import { Body, Display } from '../ui/Txt';
+import { Body, Display, FitText } from '../ui/Txt';
 
 function RowBtn({ label, right, color = colors.ink, onPress, hint }: { label: string; right: string; color?: string; onPress: () => void; hint?: string }) {
   return (
     <Pressable accessibilityRole="button" accessibilityHint={hint} onPress={onPress} style={({ pressed }) => ({ height: 60, borderRadius: 18, backgroundColor: pressed ? colors.surfaceHover : colors.surface, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 })}>
       <Body size={16} weight={700} color={color}>{label}</Body>
-      <Body size={14} color={colors.ink4} numberOfLines={1} style={{ flexShrink: 1 }}>{right}</Body>
+      <View style={{ flexShrink: 1 }}><FitText kind="body" text={right} size={14} minSize={10} maxLines={2} color={colors.ink4} align="right" /></View>
     </Pressable>
   );
 }

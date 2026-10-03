@@ -29,7 +29,7 @@ export type AppState = {
   categoryId: string;
   topicId: string;
   round: RoundState | null;
-  reveal: { idx: number; landed: boolean };
+  reveal: { idx: number; landed: boolean; reel?: number[] };
   collOpen: boolean;
   menu: boolean;
   confirmReset: boolean;
@@ -94,7 +94,7 @@ type Action =
   | { type: 'resetScore' }
   | { type: 'group'; id: string }
   | { type: 'category'; id: string }
-  | { type: 'spin'; topicId: string; idx: number; landed: boolean }
+  | { type: 'spin'; topicId: string; idx: number; landed: boolean; reel?: number[] }
   | { type: 'spinTick'; idx: number; landed: boolean }
   | { type: 'round'; round: RoundState | null }
   | { type: 'coll'; open: boolean }
@@ -120,8 +120,8 @@ function reducer(s: AppState, a: Action): AppState {
     case 'resetScore': return { ...s, score: [0, 0], session: R.newSession(), confirmReset: false };
     case 'group': return { ...s, groupId: a.id, screen: 'group', menu: false, collOpen: false };
     case 'category': return { ...s, categoryId: a.id, groupId: groupOfCategory(a.id).id, screen: 'subtopics', menu: false, collOpen: false };
-    case 'spin': return { ...s, topicId: a.topicId, reveal: { idx: a.idx, landed: a.landed }, screen: 'reveal', menu: false, collOpen: false };
-    case 'spinTick': return { ...s, reveal: { idx: a.idx, landed: a.landed } };
+    case 'spin': return { ...s, topicId: a.topicId, reveal: { idx: a.idx, landed: a.landed, reel: a.reel }, screen: 'reveal', menu: false, collOpen: false };
+    case 'spinTick': return { ...s, reveal: { ...s.reveal, idx: a.idx, landed: a.landed } };
     case 'round': return { ...s, round: a.round };
     case 'coll': return { ...s, collOpen: a.open };
     case 'menu': return { ...s, menu: a.open };
@@ -152,6 +152,7 @@ export type Game = {
   openGroup: (id: string) => void;
   openCategory: (id: string) => void;
   startRandom: () => void;
+  landSpin: () => void;
   chooseTopic: (id: string) => void;
   startRound: () => void;
   tapCard: () => void;
@@ -314,20 +315,24 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           sfx('topic_land'); haptic('land');
           return;
         }
-        dispatch({ type: 'spin', topicId: target.id, idx: poolIdx[Math.floor(Math.random() * poolIdx.length)] ?? targetIdx, landed: false });
-        let t = 0, i = Math.floor(Math.random() * poolIdx.length);
-        const steps = 16;
-        for (let s = 0; s < steps; s++) {
-          t += 45 + s * s * 1.5;
-          const last = s === steps - 1;
-          const idx = last ? targetIdx : poolIdx[(i = (i + 1) % poolIdx.length)] ?? targetIdx;
-          const tt = setTimeout(() => {
-            dispatch({ type: 'spinTick', idx, landed: last });
-            sfx(last ? 'topic_land' : 'topic_spin_tick');
-            if (last) haptic('land');
-          }, t);
-          timers.current.push(tt);
+        // A shuffled strip of categories ending on the target; the reveal screen scrolls it like a slot reel.
+        const titleOf = (i: number) => TOPICS[i]?.categoryTitle;
+        const bag = [...new Set(poolIdx)].sort(() => Math.random() - 0.5);
+        const reel: number[] = [];
+        for (let k = 0; reel.length < 26; k++) {
+          const cand = bag[k % Math.max(1, bag.length)] ?? targetIdx;
+          if (titleOf(cand) !== titleOf(reel[reel.length - 1]) && cand !== targetIdx) reel.push(cand);
+          if (k > 400) break;
         }
+        reel.push(targetIdx);
+        dispatch({ type: 'spin', topicId: target.id, idx: reel[0] ?? targetIdx, landed: false, reel });
+      },
+      landSpin: () => {
+        const s = stateRef.current;
+        if (s.reveal.landed) return;
+        const idx = TOPICS.findIndex((t) => t.id === s.topicId);
+        dispatch({ type: 'spinTick', idx, landed: true });
+        sfx('topic_land'); haptic('land');
       },
       chooseTopic: (id) => {
         clearTimers();
@@ -374,7 +379,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         if (!before || before.phase !== 'auction' || before.turn !== p) return;
         const nr = setRound((r) => R.pass(r, p));
         if (!nr || nr === before) return;
-        haptic('adjust');
+        sfx('pass'); haptic('adjust');
         if (nr.phase === 'result') afterResolve(nr);
         else stopGoing();
       },

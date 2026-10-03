@@ -7,7 +7,7 @@ import { colors, layout, withAlpha } from '../theme/tokens';
 import { TextLink } from '../ui/Btn';
 import { Enter } from '../ui/Motion';
 import { Screen, useScreenInsets } from '../ui/Screen';
-import { Body, Display, Mono } from '../ui/Txt';
+import { Body, Display, Mono, FitText } from '../ui/Txt';
 
 function Offer({ title, tagline, accent, price, owned, available, featured, onBuy, delay }: {
   title: string; tagline: string; accent: string; price?: string; owned: boolean; available: boolean; featured?: boolean; onBuy: () => void; delay: number;
@@ -26,7 +26,7 @@ function Offer({ title, tagline, accent, price, owned, available, featured, onBu
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <View style={{ flex: 1 }}>
             {featured && <Mono size={10} color={accent} ls={0.16}>BEST VALUE</Mono>}
-            <Display size={19} wdth={112} upper={false} ls={-0.01} lh={1.15} numberOfLines={2}>{title}</Display>
+            <FitText text={title} size={19} minSize={13} maxLines={2} wdth={112} upper={false} ls={-0.01} lh={1.15} />
             <Body size={13} color={colors.ink3} style={{ marginTop: 4 }}>{tagline}</Body>
           </View>
           <View style={{ minWidth: 84, height: 44, paddingHorizontal: 14, borderRadius: 14, backgroundColor: owned ? colors.line12 : accent, alignItems: 'center', justifyContent: 'center' }}>

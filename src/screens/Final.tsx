@@ -8,7 +8,7 @@ import { colors, layout, playerColor } from '../theme/tokens';
 import { CTA } from '../ui/Btn';
 import { Enter } from '../ui/Motion';
 import { Row, Screen, useScreenInsets } from '../ui/Screen';
-import { Body, Display, Mono } from '../ui/Txt';
+import { Body, Display, Mono, FitText } from '../ui/Txt';
 
 function CollectionCard({ p }: { p: Player }) {
   const g = useGame();
@@ -16,12 +16,12 @@ function CollectionCard({ p }: { p: Player }) {
   const coll = r.collections[p];
   return (
     <Enter kind={p === 0 ? 'left' : 'right'} delay={100} duration={400} style={{ flex: 1, borderRadius: 22, backgroundColor: colors.surface, paddingVertical: 16, paddingHorizontal: 14 }}>
-      <Display size={20} wdth={118} color={playerColor(p)} ls={-0.01} lh={1.1} numberOfLines={1}>{g.names[p]}</Display>
+      <FitText text={g.names[p]} size={20} minSize={12} wdth={118} color={playerColor(p)} ls={-0.01} lh={1.1} />
       <View style={{ marginTop: 10 }}>
         {coll.map((c, i) => (
           <Enter key={`${c.name}-${i}`} kind="in" delay={220 + i * 60} duration={300}>
             <Row justify="space-between" gap={6} style={{ paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.line07 }}>
-              <Body size={14} weight={600} color={colors.ink} style={{ flex: 1 }} numberOfLines={2}>{c.name}</Body>
+              <View style={{ flex: 1 }}><FitText kind="body" text={c.name} size={14} minSize={10} maxLines={3} weight={600} color={colors.ink} /></View>
               <Body size={14} weight={600} color={colors.ink3} tabular>${c.price}</Body>
             </Row>
           </Enter>

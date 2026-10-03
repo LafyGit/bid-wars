@@ -25,6 +25,9 @@ function NameCard({ p }: { p: Player }) {
         placeholder="Enter name"
         placeholderTextColor={colors.ink5}
         autoCorrect={false}
+        spellCheck={false}
+        contextMenuHidden
+        selectTextOnFocus={false}
         autoCapitalize="words"
         returnKeyType="done"
         accessibilityLabel={`Player ${p + 1} name`}

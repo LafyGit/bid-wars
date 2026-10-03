@@ -20,7 +20,7 @@
         "UIViewControllerBasedStatusBarAppearance": false
       },
       "appleTeamId": "CN8378NUAA",
-      "buildNumber": "11",
+      "buildNumber": "13",
       "config": {
         "usesNonExemptEncryption": false
       }
@@ -34,7 +34,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "versionCode": 11
+      "versionCode": 13
     },
     "web": {
       "favicon": "./assets/favicon.png"

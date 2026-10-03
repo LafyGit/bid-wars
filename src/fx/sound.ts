@@ -1,7 +1,7 @@
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 
-/** Audio event bus. Placeholder low-gain tones in V1; swap the sources for real cues later. */
-export type SoundEvent = 'reveal' | 'lock' | 'countdown_tick' | 'win' | 'tie' | 'final_result' | 'topic_spin_tick' | 'topic_land';
+/** Audio event bus. Auction-house sound set: gavel knocks, coin clinks, a cash-register 'sold', a slot-reel ratchet. */
+export type SoundEvent = 'reveal' | 'lock' | 'countdown_tick' | 'win' | 'tie' | 'final_result' | 'topic_spin_tick' | 'topic_land' | 'pass';
 
 const sources: Record<SoundEvent, number> = {
   reveal: require('../../assets/sfx/reveal.caf'),
@@ -12,6 +12,7 @@ const sources: Record<SoundEvent, number> = {
   final_result: require('../../assets/sfx/final.caf'),
   topic_spin_tick: require('../../assets/sfx/spin.caf'),
   topic_land: require('../../assets/sfx/land.caf'),
+  pass: require('../../assets/sfx/pass.caf'),
 };
 
 let enabled = true;

@@ -9,7 +9,7 @@ import { colors, layout, withAlpha } from '../theme/tokens';
 import { TextLink } from '../ui/Btn';
 import { Enter } from '../ui/Motion';
 import { Screen, useScreenInsets } from '../ui/Screen';
-import { Body, Display, Mono } from '../ui/Txt';
+import { Body, Display, FitText, Mono } from '../ui/Txt';
 
 /** Subtopics of one category. A "surprise me" row picks one at random from this category. */
 export function Subtopics() {
@@ -50,7 +50,7 @@ export function Subtopics() {
             >
               <View style={{ width: 10, height: 44, borderRadius: 5, backgroundColor: c.accent }} />
               <View style={{ flex: 1 }}>
-                <Display size={18} wdth={112} upper={false} ls={0} lh={1.1}>{t.title}</Display>
+                <FitText text={t.title} size={18} minSize={12} maxLines={2} wdth={112} upper={false} ls={0} lh={1.1} />
                 <Body size={13} color={colors.ink3} style={{ marginTop: 2 }}>{t.subtitle}</Body>
               </View>
               <Mono size={10} ls={0.1} lh={1.5} align="right">PLAY →</Mono>

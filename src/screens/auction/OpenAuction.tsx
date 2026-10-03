@@ -9,7 +9,7 @@ import { CTA, Outline, Stepper } from '../../ui/Btn';
 import { Enter, Pulse } from '../../ui/Motion';
 import { PlayerMark } from '../../ui/PlayerMark';
 import { Row } from '../../ui/Screen';
-import { Body, Display, Mono } from '../../ui/Txt';
+import { Body, Display, FitText, Mono } from '../../ui/Txt';
 
 /** Big price that pops every time it changes. */
 function PricePop({ price, color }: { price: number; color: string }) {
@@ -113,7 +113,7 @@ export function OpenAuction() {
       {/* Item band */}
       <Enter kind="in" duration={320} style={{ borderRadius: 18, backgroundColor: accent, paddingVertical: 10, paddingHorizontal: 16, alignItems: 'center' }}>
         <Mono size={10} color={colors.bg}>ITEM {r.idx + 1} / 10 · UP FOR AUCTION</Mono>
-        <Display size={26} wdth={80} color={colors.bg} ls={0} lh={1.05} numberOfLines={1} adjustsFontSizeToFit>{item}</Display>
+        <FitText text={item} size={26} minSize={13} maxLines={2} wdth={80} color={colors.bg} ls={0} lh={1.05} align="center" />
       </Enter>
 
       {/* Current bid */}
