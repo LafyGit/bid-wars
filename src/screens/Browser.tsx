@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { COMING_SOON, GROUPS, TOPICS } from '../content/topics';
+import { COMING_SOON, GROUPS } from '../content/topics';
 import { categoryUnlocked } from '../store/entitlements';
 import { useGame } from '../store/GameContext';
 import { colors, layout } from '../theme/tokens';
@@ -19,7 +19,7 @@ export function Browser() {
       <View style={{ paddingHorizontal: layout.padX }}>
         <TextLink label="← BACK" onPress={() => g.go('home')} />
         <Display size={36} style={{ marginTop: 10 }}>TOPIC PACKS</Display>
-        <Body size={14} color={colors.ink3} style={{ marginTop: 8 }}>{GROUPS.length} groups, {TOPICS.length} packs. Items stay secret until they're up for auction.</Body>
+        <Body size={14} color={colors.ink3} style={{ marginTop: 8 }}>Items stay secret until they're up for auction.</Body>
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: layout.padX, paddingTop: 18, paddingBottom: p.bottom, gap: 8 }} showsVerticalScrollIndicator={false}>
         {GROUPS.map((gr, i) => {
@@ -39,7 +39,7 @@ export function Browser() {
                   <Display size={18} wdth={112} upper={false} ls={0} lh={1.1} numberOfLines={1}>{gr.title}</Display>
                   <Body size={13} color={colors.ink3} style={{ marginTop: 2 }} numberOfLines={1}>{gr.subtitle}</Body>
                 </View>
-                <Mono size={10} ls={0.1} lh={1.5} align="right">{`${gr.topicCount} PACKS\n${isOpen ? '▲' : '▼'}`}</Mono>
+                <Mono size={10} ls={0.1} lh={1.5} align="right">{isOpen ? '▲' : '▼'}</Mono>
               </Pressable>
               {isOpen && (
                 <View style={{ paddingLeft: 16, paddingTop: 6, gap: 4 }}>
@@ -53,7 +53,7 @@ export function Browser() {
                             <Body size={15} weight={700} color={colors.ink} numberOfLines={1}>{t.title}</Body>
                             <Body size={12} color={colors.ink4} numberOfLines={1}>{t.subtitle}</Body>
                           </View>
-                          <Mono size={10} ls={0.1} color={categoryUnlocked(c.id, g.state.owned) ? colors.ink3 : gr.accent}>{categoryUnlocked(c.id, g.state.owned) ? `${t.items.length} · PLAY →` : 'LOCKED'}</Mono>
+                          <Mono size={10} ls={0.1} color={categoryUnlocked(c.id, g.state.owned) ? colors.ink3 : gr.accent}>{categoryUnlocked(c.id, g.state.owned) ? 'PLAY →' : 'LOCKED'}</Mono>
                         </Pressable>
                       ))}
                     </View>

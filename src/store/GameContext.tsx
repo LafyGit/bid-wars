@@ -7,6 +7,7 @@ import { haptic, setHapticsEnabled } from '../fx/haptics';
 import { initSound, setSoundEnabled, sfx } from '../fx/sound';
 import { KEYS, load, loadRaw, save } from './storage';
 import { playableTopics, topicUnlocked } from './entitlements';
+import { pickItems, pickTopicId, remember } from '../game/pick';
 import * as store from './purchases';
 import type { ProductInfo, StoreStatus } from './purchases';
 
@@ -37,6 +38,9 @@ export type AppState = {
   winnerBurst: number;
   /** Product ids the player owns (cached locally, confirmed by the store). */
   owned: string[];
+  /** Item names shown recently (oldest first) and topics played recently, so evenings stay fresh. */
+  seen: string[];
+  recentTopics: string[];
   products: Record<string, ProductInfo>;
   storeStatus: StoreStatus;
   storeMessage: string | null;
@@ -69,6 +73,8 @@ const initial: AppState = {
   lastRound: 1,
   winnerBurst: 0,
   owned: [],
+  seen: [],
+  recentTopics: [],
   products: {},
   storeStatus: 'loading',
   storeMessage: null,
@@ -95,6 +101,7 @@ type Action =
   | { type: 'menu'; open: boolean }
   | { type: 'roundWon'; w: Player; score: Pair<number>; session: Session }
   | { type: 'owned'; ids: string[]; replace?: boolean }
+  | { type: 'history'; seen: string[]; recentTopics: string[] }
   | { type: 'products'; products: Record<string, ProductInfo> }
   | { type: 'storeStatus'; status: StoreStatus }
   | { type: 'storeMessage'; message: string | null }
@@ -118,6 +125,7 @@ function reducer(s: AppState, a: Action): AppState {
     case 'round': return { ...s, round: a.round };
     case 'coll': return { ...s, collOpen: a.open };
     case 'menu': return { ...s, menu: a.open };
+    case 'history': return { ...s, seen: a.seen, recentTopics: a.recentTopics };
     case 'owned': return { ...s, owned: a.replace ? a.ids : Array.from(new Set([...s.owned, ...a.ids])) };
     case 'products': return { ...s, products: a.products };
     case 'storeStatus': return { ...s, storeStatus: a.status };
@@ -192,15 +200,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [names, score, session, settings, owned] = await Promise.all([
+      const [names, score, session, settings, owned, seen, recentTopics] = await Promise.all([
         loadRaw<Pair<string>>(KEYS.names, ['', '']),
         loadRaw<Pair<number>>(KEYS.score, [0, 0]),
         load<Session>(KEYS.session, R.newSession()),
         load<Settings>(KEYS.settings, DEFAULT_SETTINGS),
         loadRaw<string[]>(KEYS.owned, []),
+        loadRaw<string[]>(KEYS.seen, []),
+        loadRaw<string[]>(KEYS.recent, []),
       ]);
       if (!alive) return;
       dispatch({ type: 'owned', ids: owned, replace: true });
+      dispatch({ type: 'history', seen, recentTopics });
       store.startStore({
         onOwned: (ids) => alive && dispatch({ type: 'owned', ids }),
         onProducts: (products) => alive && dispatch({ type: 'products', products }),
@@ -294,7 +305,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       startRandom: () => {
         clearTimers();
         const pool = playableTopics(TOPICS, stateRef.current.owned);
-        const target = pool[Math.floor(Math.random() * pool.length)] ?? randomTopic();
+        const targetId = pool.length ? pickTopicId(pool.map((t) => t.id), stateRef.current.recentTopics) : randomTopic().id;
+        const target = TOPICS.find((t) => t.id === targetId) ?? randomTopic();
         const targetIdx = TOPICS.indexOf(target);
         const poolIdx = pool.map((t) => TOPICS.indexOf(t));
         if (rmRef.current) {
@@ -332,7 +344,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         clearTimers();
         const s = stateRef.current;
         const topic = topicById(s.topicId);
-        const items = R.shuffle(topic.items).slice(0, R.ITEMS);
+        const picked = pickItems(topic.items, R.ITEMS, s.seen);
+        const items = picked.items;
+        const recentTopics = remember(s.recentTopics, topic.id);
+        dispatch({ type: 'history', seen: picked.seen, recentTopics });
+        save(KEYS.seen, picked.seen); save(KEYS.recent, recentTopics);
         const opener: Player = (s.session.rounds % 2) as Player;
         dispatch({ type: 'round', round: R.startRound(topic.id, items, opener) });
         go('auction', 'auction');

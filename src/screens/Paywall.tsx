@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { GROUPS, TOPICS, groupById } from '../content/topics';
+import { GROUPS, groupById } from '../content/topics';
 import { groupProductId, ownsGroup, ownsPro, PRO_ID } from '../store/entitlements';
 import { useGame } from '../store/GameContext';
 import { colors, layout, withAlpha } from '../theme/tokens';
@@ -45,8 +45,6 @@ export function Paywall() {
   const { owned, products, storeStatus, storeMessage, paywallGroup, paywallBack } = g.state;
   const group = paywallGroup ? groupById(paywallGroup) : null;
   const available = storeStatus === 'ready';
-  const groupPaidPacks = group ? group.categories.filter((c) => !c.free).reduce((n, c) => n + c.topics.length, 0) : 0;
-  const lockedTotal = TOPICS.filter((t) => !g.isUnlocked(t)).length;
   return (
     <Screen padX={false} padBottom={false}>
       <View style={{ paddingHorizontal: layout.padX }}>
@@ -57,7 +55,7 @@ export function Paywall() {
       <ScrollView contentContainerStyle={{ paddingHorizontal: layout.padX, paddingTop: 18, paddingBottom: p.bottom + 12, gap: 10 }} showsVerticalScrollIndicator={false}>
         <Offer
           title="Bid Wars Pro"
-          tagline={`All ${TOPICS.length} packs across every group, plus every pack we add later`}
+          tagline="Every topic in every group, plus everything we add later"
           accent="#39FF6A"
           featured
           price={products[PRO_ID]?.price}
@@ -69,7 +67,7 @@ export function Paywall() {
         {group && (
           <Offer
             title={`${group.title} Pack`}
-            tagline={`${groupPaidPacks} more packs in ${group.categories.filter((c) => !c.free).length} categories`}
+            tagline={group.subtitle}
             accent={group.accent}
             price={products[groupProductId(group.id)]?.price}
             owned={ownsGroup(owned, group.id)}
@@ -96,7 +94,7 @@ export function Paywall() {
         })}
         {group && (
           <Pressable accessibilityRole="button" onPress={() => g.openPaywall(null)} style={{ alignSelf: 'center', paddingVertical: 8 }}>
-            <Mono color={colors.ink3}>SEE ALL PACKS</Mono>
+            <Mono color={colors.ink3}>SEE ALL UNLOCKS</Mono>
           </Pressable>
         )}
         {storeStatus === 'unavailable' && <Body size={13} color={colors.ink4} align="center">The App Store isn’t available right now, so purchases are paused. The free packs still work.</Body>}
@@ -105,7 +103,7 @@ export function Paywall() {
         <Pressable accessibilityRole="button" onPress={g.restorePurchases} style={({ pressed }) => ({ alignSelf: 'center', paddingVertical: 12, paddingHorizontal: 18, borderRadius: 14, borderWidth: 1, borderColor: colors.line14, opacity: pressed ? 0.7 : 1 })}>
           <Mono color={colors.ink2}>RESTORE PURCHASES</Mono>
         </Pressable>
-        <Body size={11} color={colors.ink5} align="center" lh={1.5}>{`${lockedTotal} packs are still locked. Payment is charged to your Apple account at confirmation. Purchases are non-consumable and can be restored at any time.`}</Body>
+        <Body size={11} color={colors.ink5} align="center" lh={1.5}>Payment is charged to your Apple account at confirmation. Purchases are one-time and can be restored at any time.</Body>
       </ScrollView>
     </Screen>
   );
