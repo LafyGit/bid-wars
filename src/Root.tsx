@@ -11,6 +11,7 @@ import { Group } from './screens/Group';
 import { Home } from './screens/Home';
 import { HowToPlay } from './screens/HowToPlay';
 import { MatchIntro } from './screens/MatchIntro';
+import { Paywall } from './screens/Paywall';
 import { Settings } from './screens/Settings';
 import { Setup } from './screens/Setup';
 import { Splash } from './screens/Splash';
@@ -30,6 +31,7 @@ export function Root() {
     case 'setup': screen = <Setup />; break;
     case 'topics': screen = <Topics />; break;
     case 'group': screen = <Group />; break;
+    case 'paywall': screen = <Paywall />; break;
     case 'subtopics': screen = <Subtopics />; break;
     case 'reveal': screen = <TopicReveal />; break;
     case 'intro': screen = <MatchIntro />; break;

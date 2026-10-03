@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { GROUPS } from '../content/topics';
+import { categoryUnlocked } from '../store/entitlements';
 import { useGame } from '../store/GameContext';
 import { colors, layout } from '../theme/tokens';
 import { TextLink } from '../ui/Btn';
@@ -46,7 +47,7 @@ export function Topics() {
                 <View style={{ position: 'absolute', right: -34, top: -34, width: 112, height: 112, borderRadius: 56, backgroundColor: gr.accent }} />
                 <Display size={19} wdth={112} upper={false} ls={-0.01} lh={1.1} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>{gr.title}</Display>
                 <Body size={12} color={colors.ink3} lh={1.3} style={{ marginTop: 3 }} numberOfLines={2}>{gr.subtitle}</Body>
-                <Mono size={10} color={gr.accent} ls={0.12} style={{ marginTop: 8 }}>{gr.topicCount} PACKS</Mono>
+                <Mono size={10} color={gr.accent} ls={0.12} style={{ marginTop: 8 }}>{(() => { const open = gr.categories.filter((c) => categoryUnlocked(c.id, g.state.owned)).reduce((n, c) => n + c.topics.length, 0); return open === gr.topicCount ? `${gr.topicCount} PACKS` : `${open} / ${gr.topicCount} OPEN`; })()}</Mono>
               </Pressable>
             </Enter>
           ))}

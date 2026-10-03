@@ -28,7 +28,18 @@ test('every category belongs to exactly one group and every group member exists'
 
 test('all gaming categories sit in the Gaming group', () => {
   const gaming = GROUPS.find((g) => g.id === 'gaming')!;
-  for (const id of ['valorant', 'cs2', 'league', 'fortnite', 'minecraft', 'games', 'nintendo', 'gta', 'cod', 'apex', 'overwatch', 'esports']) {
+  for (const id of ['valorant', 'cs2', 'league', 'fortnite', 'minecraft', 'fps', 'games', 'gametypes', 'nintendo', 'gta']) {
     assert.ok(gaming.categoryIds.includes(id), `${id} should be in Gaming`);
   }
+});
+
+test('there is a meaningful free tier in most groups and paid content in every group', () => {
+  const free = CATALOG.filter((c) => c.free);
+  assert.ok(free.length >= 6, 'at least six free categories');
+  for (const g of GROUPS) {
+    const cats = CATALOG.filter((c) => g.categoryIds.includes(c.id));
+    assert.ok(cats.some((c) => !c.free), `${g.id} needs something to sell`);
+  }
+  const freePacks = free.reduce((n, c) => n + c.subtopics.length, 0);
+  assert.ok(freePacks >= 30, `free tier is too small (${freePacks} packs)`);
 });

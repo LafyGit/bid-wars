@@ -6,10 +6,13 @@ import type { Pair, Player, RoundState, Session, Settings } from '../game/types'
 import { haptic, setHapticsEnabled } from '../fx/haptics';
 import { initSound, setSoundEnabled, sfx } from '../fx/sound';
 import { KEYS, load, loadRaw, save } from './storage';
+import { playableTopics, topicUnlocked } from './entitlements';
+import * as store from './purchases';
+import type { ProductInfo, StoreStatus } from './purchases';
 
 export type Screen =
   | 'splash' | 'home' | 'howto' | 'setup' | 'topics' | 'subtopics' | 'reveal' | 'intro'
-  | 'auction' | 'final' | 'winner' | 'awards' | 'browser' | 'settings' | 'group';
+  | 'auction' | 'final' | 'winner' | 'awards' | 'browser' | 'settings' | 'group' | 'paywall';
 
 export type AppState = {
   hydrated: boolean;
@@ -32,6 +35,14 @@ export type AppState = {
   roundWinner: Player;
   lastRound: number;
   winnerBurst: number;
+  /** Product ids the player owns (cached locally, confirmed by the store). */
+  owned: string[];
+  products: Record<string, ProductInfo>;
+  storeStatus: StoreStatus;
+  storeMessage: string | null;
+  /** Group the paywall was opened from, so it can lead with that group's pack. */
+  paywallGroup: string | null;
+  paywallBack: Screen;
 };
 
 const DEFAULT_SETTINGS: Settings = { sound: true, haptics: true, reducedMotion: false, threeSecondRule: false, aiJudge: true };
@@ -57,6 +68,12 @@ const initial: AppState = {
   roundWinner: 0,
   lastRound: 1,
   winnerBurst: 0,
+  owned: [],
+  products: {},
+  storeStatus: 'loading',
+  storeMessage: null,
+  paywallGroup: null,
+  paywallBack: 'topics',
 };
 
 type Action =
@@ -76,7 +93,12 @@ type Action =
   | { type: 'round'; round: RoundState | null }
   | { type: 'coll'; open: boolean }
   | { type: 'menu'; open: boolean }
-  | { type: 'roundWon'; w: Player; score: Pair<number>; session: Session };
+  | { type: 'roundWon'; w: Player; score: Pair<number>; session: Session }
+  | { type: 'owned'; ids: string[]; replace?: boolean }
+  | { type: 'products'; products: Record<string, ProductInfo> }
+  | { type: 'storeStatus'; status: StoreStatus }
+  | { type: 'storeMessage'; message: string | null }
+  | { type: 'paywall'; group: string | null; back: Screen };
 
 function reducer(s: AppState, a: Action): AppState {
   switch (a.type) {
@@ -96,6 +118,11 @@ function reducer(s: AppState, a: Action): AppState {
     case 'round': return { ...s, round: a.round };
     case 'coll': return { ...s, collOpen: a.open };
     case 'menu': return { ...s, menu: a.open };
+    case 'owned': return { ...s, owned: a.replace ? a.ids : Array.from(new Set([...s.owned, ...a.ids])) };
+    case 'products': return { ...s, products: a.products };
+    case 'storeStatus': return { ...s, storeStatus: a.status };
+    case 'storeMessage': return { ...s, storeMessage: a.message };
+    case 'paywall': return { ...s, screen: 'paywall', paywallGroup: a.group, paywallBack: a.back, storeMessage: null, menu: false, collOpen: false };
     case 'roundWon': return { ...s, roundWinner: a.w, score: a.score, session: a.session, lastRound: a.session.rounds, screen: 'winner', winnerBurst: s.winnerBurst + 1, menu: false, collOpen: false };
   }
 }
@@ -128,6 +155,10 @@ export type Game = {
   toggleColl: () => void;
   toggleMenu: () => void;
   quitRound: () => void;
+  openPaywall: (group?: string | null) => void;
+  buyProduct: (id: string) => void;
+  restorePurchases: () => void;
+  isUnlocked: (topic: Topic) => boolean;
 };
 
 const Ctx = createContext<Game | null>(null);
@@ -161,13 +192,21 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [names, score, session, settings] = await Promise.all([
+      const [names, score, session, settings, owned] = await Promise.all([
         loadRaw<Pair<string>>(KEYS.names, ['', '']),
         loadRaw<Pair<number>>(KEYS.score, [0, 0]),
         load<Session>(KEYS.session, R.newSession()),
         load<Settings>(KEYS.settings, DEFAULT_SETTINGS),
+        loadRaw<string[]>(KEYS.owned, []),
       ]);
       if (!alive) return;
+      dispatch({ type: 'owned', ids: owned, replace: true });
+      store.startStore({
+        onOwned: (ids) => alive && dispatch({ type: 'owned', ids }),
+        onProducts: (products) => alive && dispatch({ type: 'products', products }),
+        onStatus: (status) => alive && dispatch({ type: 'storeStatus', status }),
+        onMessage: (message) => alive && dispatch({ type: 'storeMessage', message }),
+      });
       setHapticsEnabled(settings.haptics);
       setSoundEnabled(settings.sound);
       initSound();
@@ -178,6 +217,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const t = setTimeout(() => { if (stateRef.current.screen === 'splash') dispatch({ type: 'go', screen: 'home' }); }, 1700);
     return () => { alive = false; sub.remove(); clearTimeout(t); clearTimers(); };
   }, [clearTimers]);
+
+  // Remember purchases locally so the game still unlocks offline.
+  const firstOwned = useRef(true);
+  useEffect(() => {
+    if (firstOwned.current) { firstOwned.current = false; return; }
+    save(KEYS.owned, state.owned);
+  }, [state.owned]);
 
   const setRound = useCallback((fn: (r: RoundState) => RoundState) => {
     const r = stateRef.current.round;
@@ -247,20 +293,22 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       openCategory: (id) => { haptic('nav'); dispatch({ type: 'category', id }); },
       startRandom: () => {
         clearTimers();
-        const target = randomTopic();
+        const pool = playableTopics(TOPICS, stateRef.current.owned);
+        const target = pool[Math.floor(Math.random() * pool.length)] ?? randomTopic();
         const targetIdx = TOPICS.indexOf(target);
+        const poolIdx = pool.map((t) => TOPICS.indexOf(t));
         if (rmRef.current) {
           dispatch({ type: 'spin', topicId: target.id, idx: targetIdx, landed: true });
           sfx('topic_land'); haptic('land');
           return;
         }
-        dispatch({ type: 'spin', topicId: target.id, idx: Math.floor(Math.random() * TOPICS.length), landed: false });
-        let t = 0, i = Math.floor(Math.random() * TOPICS.length);
+        dispatch({ type: 'spin', topicId: target.id, idx: poolIdx[Math.floor(Math.random() * poolIdx.length)] ?? targetIdx, landed: false });
+        let t = 0, i = Math.floor(Math.random() * poolIdx.length);
         const steps = 16;
         for (let s = 0; s < steps; s++) {
           t += 45 + s * s * 1.5;
           const last = s === steps - 1;
-          const idx = last ? targetIdx : (i = (i + 1) % TOPICS.length);
+          const idx = last ? targetIdx : poolIdx[(i = (i + 1) % poolIdx.length)] ?? targetIdx;
           const tt = setTimeout(() => {
             dispatch({ type: 'spinTick', idx, landed: last });
             sfx(last ? 'topic_land' : 'topic_spin_tick');
@@ -271,6 +319,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       },
       chooseTopic: (id) => {
         clearTimers();
+        const wanted = topicById(id);
+        if (!topicUnlocked(wanted, stateRef.current.owned)) {
+          haptic('nav');
+          dispatch({ type: 'paywall', group: groupOfCategory(wanted.categoryId).id, back: stateRef.current.screen });
+          return;
+        }
         dispatch({ type: 'spin', topicId: id, idx: TOPICS.findIndex((t) => t.id === id), landed: true });
         sfx('reveal');
       },
@@ -328,6 +382,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       },
       toggleColl: () => dispatch({ type: 'coll', open: !stateRef.current.collOpen }),
       toggleMenu: () => dispatch({ type: 'menu', open: !stateRef.current.menu }),
+      openPaywall: (group = null) => { haptic('nav'); dispatch({ type: 'paywall', group, back: stateRef.current.screen === 'paywall' ? stateRef.current.paywallBack : stateRef.current.screen }); },
+      buyProduct: (id) => { haptic('lock'); store.buy(id); },
+      restorePurchases: () => { store.restore(); },
+      isUnlocked: (t) => topicUnlocked(t, stateRef.current.owned),
       quitRound: () => { clearTimers(); dispatch({ type: 'round', round: null }); go('home', 'home'); },
     };
   }, [later, clearTimers, setRound]);

@@ -42,7 +42,8 @@
     "plugins": [
       "expo-font",
       "expo-audio",
-      "./plugins/withSceneLifecycle.js"
+      "./plugins/withSceneLifecycle.js",
+      "expo-iap"
     ]
   }
 }

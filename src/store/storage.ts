@@ -5,6 +5,7 @@ export const KEYS = {
   score: 'bidwars.score',
   session: 'bidwars.session',
   settings: 'bidwars.settings',
+  owned: 'bidwars.owned',
 } as const;
 
 export async function load<T>(key: string, fallback: T): Promise<T> {

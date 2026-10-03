@@ -54,7 +54,7 @@ function Judge() {
     <Enter kind="in" delay={400} duration={400} style={{ marginTop: 12, borderRadius: 22, backgroundColor: colors.surface, padding: 16, borderWidth: 1.5, borderColor: v ? color : colors.line12 }}>
       <Row gap={10}>
         <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: color, alignItems: 'center', justifyContent: 'center' }}>
-          <Display size={16} color={colors.bg} ls={0} lh={1.1}>AI</Display>
+          <Display size={16} color={colors.bg} ls={0} lh={1.1}>{judgeAvailable() ? 'AI' : '⚖'}</Display>
         </View>
         <View style={{ flex: 1 }}>
           <Mono size={10} color={colors.ink4}>{judgeAvailable() ? 'THE JUDGE · CLAUDE' : 'THE JUDGE'}</Mono>
