@@ -33,3 +33,5 @@ Xcode's bundling step needs Node >= 20: `ios/.xcode.env.local` must point `NODE_
 Lafy's phone runs the iOS 27 beta, which traps at launch unless the app adopts UIScene; keep the scene-lifecycle plugin. To verify on the phone: `xcodebuild -jobs 4 ... -destination id=00008140-00165CCA2402201C -derivedDataPath build/device build`, then `xcrun devicectl device install app` / `process launch` / `capture screenshot`; crash logs: `devicectl device copy from --domain-type systemCrashLogs --source .`.
 
 `ExportOptions.plist` uses automatic signing, `destination: upload`, and `manageAppVersionAndBuildNumber: false` so the project's own build number is the one Apple sees. Processing takes 15–30 minutes before the build appears in TestFlight. The "Upload Symbols Failed" warnings for the prebuilt React/Hermes frameworks are harmless.
+
+- 1.0.0 (10, 11): App Store 1.0 candidates. 11 = no counts in the UI, non-repeating items/topics, can't-decide helper, 264 packs. Purchases: `com.lafyalmutlaq.bidwars.pro` ($7.99) plus `.pack.{gaming,sports,entertainment,foodtravel,lifestyle}` ($2.99).
