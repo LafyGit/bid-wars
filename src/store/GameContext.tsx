@@ -370,7 +370,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         if (!before || !R.canBid(before, p)) return;
         const nr = setRound((r) => R.placeBid(r, p, amount));
         if (!nr || nr === before) return;
-        sfx('lock'); haptic('lock');
+        sfx(p === 0 ? 'bid_p1' : 'bid_p2'); haptic('lock');
         if (nr.phase === 'result') afterResolve(nr);
         else armGoing();
       },
