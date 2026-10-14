@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { GROUPS, groupById } from '../content/topics';
+import { rewardedAvailable } from '../ads/ads';
+import { GROUPS, groupById, topicById } from '../content/topics';
 import { groupProductId, ownsGroup, ownsPro, PRO_ID } from '../store/entitlements';
 import { useGame } from '../store/GameContext';
 import { colors, layout, withAlpha } from '../theme/tokens';
@@ -45,12 +46,19 @@ export function Paywall() {
   const { owned, products, storeStatus, storeMessage, paywallGroup, paywallBack } = g.state;
   const group = paywallGroup ? groupById(paywallGroup) : null;
   const available = storeStatus === 'ready';
+  const trial = g.state.paywallTopic ? topicById(g.state.paywallTopic) : null;
+  // The rewarded ad loads in the background; poll so the offer appears once it is ready.
+  const [adReady, setAdReady] = React.useState(rewardedAvailable());
+  React.useEffect(() => {
+    const t = setInterval(() => setAdReady(rewardedAvailable()), 1000);
+    return () => clearInterval(t);
+  }, []);
   return (
     <Screen padX={false} padBottom={false}>
       <View style={{ paddingHorizontal: layout.padX }}>
         <TextLink label="← BACK" onPress={() => g.go(paywallBack === 'paywall' ? 'topics' : paywallBack)} />
         <Display size={36} lh={1} style={{ marginTop: 10 }}>{'MORE TOPICS,\nMORE WARS'}</Display>
-        <Body size={14} color={colors.ink3} style={{ marginTop: 10 }}>One-time purchases. No subscription, no ads. Yours on every device with your Apple account.</Body>
+        <Body size={14} color={colors.ink3} style={{ marginTop: 10 }}>One-time purchases, no subscription. Any purchase also removes ads. Yours on every device with your Apple account.</Body>
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: layout.padX, paddingTop: 18, paddingBottom: p.bottom + 12, gap: 10 }} showsVerticalScrollIndicator={false}>
         <Offer
@@ -92,6 +100,12 @@ export function Paywall() {
             />
           );
         })}
+        {trial && adReady && (
+          <Pressable accessibilityRole="button" accessibilityLabel={`Watch an ad to play ${trial.title} once`} onPress={g.watchAdForTopic} style={({ pressed }) => ({ borderRadius: 18, padding: 16, borderWidth: 1, borderColor: colors.line14, backgroundColor: pressed ? colors.surfaceHover : 'transparent', alignItems: 'center', gap: 4 })}>
+            <Mono color={colors.ink2}>OR WATCH A SHORT AD</Mono>
+            <Body size={14} color={colors.ink} weight={700} align="center">Play {trial.title} free this time</Body>
+          </Pressable>
+        )}
         {group && (
           <Pressable accessibilityRole="button" onPress={() => g.openPaywall(null)} style={{ alignSelf: 'center', paddingVertical: 8 }}>
             <Mono color={colors.ink3}>SEE ALL UNLOCKS</Mono>

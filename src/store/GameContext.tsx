@@ -9,6 +9,7 @@ import { KEYS, load, loadRaw, save } from './storage';
 import { playableTopics, topicUnlocked } from './entitlements';
 import { pickItems, pickTopicId, remember } from '../game/pick';
 import * as store from './purchases';
+import { initAds, maybeShowInterstitial, setAdsAllowed, showRewarded } from '../ads/ads';
 import type { ProductInfo, StoreStatus } from './purchases';
 
 export type Screen =
@@ -47,6 +48,10 @@ export type AppState = {
   /** Group the paywall was opened from, so it can lead with that group's pack. */
   paywallGroup: string | null;
   paywallBack: Screen;
+  /** Locked topic that sent the player to the paywall, offered as a one-off rewarded-ad trial. */
+  paywallTopic: string | null;
+  /** Topic unlocked for this sitting by watching a rewarded ad. */
+  trialTopic: string | null;
 };
 
 const DEFAULT_SETTINGS: Settings = { sound: true, haptics: true, reducedMotion: false, threeSecondRule: false, aiJudge: true };
@@ -80,6 +85,8 @@ const initial: AppState = {
   storeMessage: null,
   paywallGroup: null,
   paywallBack: 'topics',
+  paywallTopic: null,
+  trialTopic: null,
 };
 
 type Action =
@@ -105,7 +112,8 @@ type Action =
   | { type: 'products'; products: Record<string, ProductInfo> }
   | { type: 'storeStatus'; status: StoreStatus }
   | { type: 'storeMessage'; message: string | null }
-  | { type: 'paywall'; group: string | null; back: Screen };
+  | { type: 'paywall'; group: string | null; back: Screen; topic?: string | null }
+  | { type: 'trial'; topic: string | null };
 
 function reducer(s: AppState, a: Action): AppState {
   switch (a.type) {
@@ -130,7 +138,8 @@ function reducer(s: AppState, a: Action): AppState {
     case 'products': return { ...s, products: a.products };
     case 'storeStatus': return { ...s, storeStatus: a.status };
     case 'storeMessage': return { ...s, storeMessage: a.message };
-    case 'paywall': return { ...s, screen: 'paywall', paywallGroup: a.group, paywallBack: a.back, storeMessage: null, menu: false, collOpen: false };
+    case 'paywall': return { ...s, screen: 'paywall', paywallGroup: a.group, paywallBack: a.back, paywallTopic: a.topic ?? null, storeMessage: null, menu: false, collOpen: false };
+    case 'trial': return { ...s, trialTopic: a.topic };
     case 'roundWon': return { ...s, roundWinner: a.w, score: a.score, session: a.session, lastRound: a.session.rounds, screen: 'winner', winnerBurst: s.winnerBurst + 1, menu: false, collOpen: false };
   }
 }
@@ -164,6 +173,10 @@ export type Game = {
   toggleColl: () => void;
   toggleMenu: () => void;
   quitRound: () => void;
+  /** Leave the winner screen for the awards, showing a between-rounds ad first when one is due. */
+  finishRound: () => void;
+  /** Rewarded ad on the paywall: watch it to play the locked topic that opened the paywall. */
+  watchAdForTopic: () => void;
   openPaywall: (group?: string | null) => void;
   buyProduct: (id: string) => void;
   restorePurchases: () => void;
@@ -229,6 +242,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const t = setTimeout(() => { if (stateRef.current.screen === 'splash') dispatch({ type: 'go', screen: 'home' }); }, 1700);
     return () => { alive = false; sub.remove(); clearTimeout(t); clearTimers(); };
   }, [clearTimers]);
+
+  // Any purchase turns ads off. Ads start a moment after launch so the consent and tracking prompts never block the splash.
+  useEffect(() => { setAdsAllowed(state.owned.length === 0); }, [state.owned]);
+  useEffect(() => {
+    if (!state.hydrated) return;
+    const t = setTimeout(() => { initAds(); }, 2500);
+    return () => clearTimeout(t);
+  }, [state.hydrated]);
 
   // Remember purchases locally so the game still unlocks offline.
   const firstOwned = useRef(true);
@@ -337,9 +358,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       chooseTopic: (id) => {
         clearTimers();
         const wanted = topicById(id);
-        if (!topicUnlocked(wanted, stateRef.current.owned)) {
+        if (!topicUnlocked(wanted, stateRef.current.owned) && stateRef.current.trialTopic !== id) {
           haptic('nav');
-          dispatch({ type: 'paywall', group: groupOfCategory(wanted.categoryId).id, back: stateRef.current.screen });
+          dispatch({ type: 'paywall', group: groupOfCategory(wanted.categoryId).id, back: stateRef.current.screen, topic: id });
           return;
         }
         dispatch({ type: 'spin', topicId: id, idx: TOPICS.findIndex((t) => t.id === id), landed: true });
@@ -408,6 +429,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       restorePurchases: () => { store.restore(); },
       isUnlocked: (t) => topicUnlocked(t, stateRef.current.owned),
       quitRound: () => { clearTimers(); dispatch({ type: 'round', round: null }); go('home', 'home'); },
+      finishRound: () => { maybeShowInterstitial().then(() => go('awards')); },
+      watchAdForTopic: () => {
+        const id = stateRef.current.paywallTopic;
+        if (!id) return;
+        showRewarded().then((earned) => {
+          if (!earned) return;
+          stateRef.current = { ...stateRef.current, trialTopic: id };
+          dispatch({ type: 'trial', topic: id });
+          api.chooseTopic(id);
+        });
+      },
     };
   }, [later, clearTimers, setRound]);
 

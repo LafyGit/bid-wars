@@ -55,7 +55,7 @@ export function Winner() {
         </View>
       </Enter>
       <Enter kind="in" delay={460} duration={400} style={{ marginTop: 14 }}>
-        <CTA label="SEE ROUND AWARDS" size={18} onPress={() => g.go('awards')} />
+        <CTA label="SEE ROUND AWARDS" size={18} onPress={g.finishRound} />
       </Enter>
     </Screen>
   );
