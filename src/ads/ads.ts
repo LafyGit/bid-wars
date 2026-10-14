@@ -4,3 +4,5 @@ export function setAdsAllowed(_allowed: boolean): void {}
 export function rewardedAvailable(): boolean { return false; }
 export async function maybeShowInterstitial(): Promise<void> {}
 export async function showRewarded(): Promise<boolean> { return false; }
+export function privacyOptionsRequired(): boolean { return false; }
+export async function openPrivacyOptions(): Promise<void> {}

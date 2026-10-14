@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { judgeAvailable } from '../ai/judge';
 import { ownsPro } from '../store/entitlements';
+import { openPrivacyOptions, privacyOptionsRequired } from '../ads/ads';
 import { useGame } from '../store/GameContext';
 import { colors } from '../theme/tokens';
 import { TextLink } from '../ui/Btn';
@@ -35,6 +36,7 @@ export function Settings() {
         <ToggleRow label="Reduced motion" sub="Skips flips, bursts and the topic spin" value={s.reducedMotion} onChange={(v) => g.setSetting('reducedMotion', v)} />
         <RowBtn label={ownsPro(g.state.owned) ? 'Bid Wars Pro' : 'Unlock more topics'} right={ownsPro(g.state.owned) ? 'Unlocked ✓' : 'See what is inside →'} onPress={() => g.openPaywall(null)} />
         <RowBtn label="Restore purchases" right="Already bought? →" onPress={() => { g.restorePurchases(); g.openPaywall(null); }} />
+        {privacyOptionsRequired() && <RowBtn label="Privacy choices" right="Ad consent →" onPress={openPrivacyOptions} />}
         <RowBtn label="Change player names" right={`${n1} & ${n2} →`} onPress={g.openSetup} />
         <RowBtn
           label={g.state.confirmReset ? 'Tap again to reset' : 'Reset match score'}

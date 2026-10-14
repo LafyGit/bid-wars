@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import mobileAds, { AdEventType, AdsConsent, InterstitialAd, MaxAdContentRating, RewardedAd, RewardedAdEventType, TestIds } from 'react-native-google-mobile-ads';
+import mobileAds, { AdEventType, AdsConsent, AdsConsentPrivacyOptionsRequirementStatus, InterstitialAd, MaxAdContentRating, RewardedAd, RewardedAdEventType, TestIds } from 'react-native-google-mobile-ads';
 import { getTrackingPermissionsAsync, requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 import { AD_UNITS, FREE_ROUNDS_BEFORE_ADS, MIN_SECONDS_BETWEEN_INTERSTITIALS } from './config';
 
@@ -13,6 +13,7 @@ const interstitialId = __DEV__ ? TestIds.INTERSTITIAL : units.interstitial;
 const rewardedId = __DEV__ ? TestIds.REWARDED : units.rewarded;
 
 let started = false;
+let privacyOptions = false;
 let allowed = true;
 let canRequest = false;
 let personalised = false;
@@ -50,6 +51,7 @@ export async function initAds(): Promise<void> {
   try {
     const consent = await AdsConsent.gatherConsent().catch(() => AdsConsent.getConsentInfo());
     canRequest = consent.canRequestAds;
+    privacyOptions = consent.privacyOptionsRequirementStatus === AdsConsentPrivacyOptionsRequirementStatus.REQUIRED;
     if (!canRequest) return;
     if (Platform.OS === 'ios') {
       const current = await getTrackingPermissionsAsync();
@@ -105,4 +107,10 @@ export function showRewarded(): Promise<boolean> {
     ad.addAdEventListener(AdEventType.ERROR, finish);
     ad.show().catch(finish);
   });
+}
+
+/** EEA/UK/Swiss players must be able to change their ad consent later (Settings › Privacy choices). */
+export function privacyOptionsRequired() { return privacyOptions; }
+export async function openPrivacyOptions(): Promise<void> {
+  try { await AdsConsent.showPrivacyOptionsForm(); } catch {}
 }
