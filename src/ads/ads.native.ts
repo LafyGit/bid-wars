@@ -60,7 +60,7 @@ export async function initAds(): Promise<void> {
     } else {
       personalised = true;
     }
-    await mobileAds().setRequestConfiguration({ maxAdContentRating: MaxAdContentRating.PG, tagForChildDirectedTreatment: false });
+    await mobileAds().setRequestConfiguration({ maxAdContentRating: MaxAdContentRating.G, tagForChildDirectedTreatment: false });
     await mobileAds().initialize();
     loadInterstitial();
     loadRewarded();

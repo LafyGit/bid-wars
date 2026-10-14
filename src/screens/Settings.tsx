@@ -48,6 +48,7 @@ export function Settings() {
         <View style={{ paddingHorizontal: 16, paddingVertical: 14, borderRadius: 18, backgroundColor: colors.surface }}>
           <Body size={16} weight={700} color={colors.ink}>About</Body>
           <Body size={13} color={colors.ink3} lh={1.5} style={{ marginTop: 4 }}>Bid Wars. A two-player open auction party game. All money is fake. All regret is real.</Body>
+          <Body size={11} color={colors.ink5} lh={1.5} style={{ marginTop: 8 }}>Bid Wars is an independent game. Game, brand, team and personal names in topic packs belong to their owners and appear only as plain-text names. Bid Wars is not affiliated with or endorsed by any of them.</Body>
         </View>
       </ScrollView>
     </Screen>

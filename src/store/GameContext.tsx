@@ -246,10 +246,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Any purchase turns ads off. Ads start a moment after launch so the consent and tracking prompts never block the splash.
   useEffect(() => { setAdsAllowed(state.owned.length === 0); }, [state.owned]);
   useEffect(() => {
-    if (!state.hydrated) return;
+    // Players who bought anything never see ads, so they never get the consent or tracking prompts either.
+    if (!state.hydrated || state.owned.length > 0) return;
     const t = setTimeout(() => { initAds(); }, 2500);
     return () => clearTimeout(t);
-  }, [state.hydrated]);
+  }, [state.hydrated, state.owned.length]);
 
   // Remember purchases locally so the game still unlocks offline.
   const firstOwned = useRef(true);
