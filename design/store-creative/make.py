@@ -43,7 +43,7 @@ fs=font('Archivo-SemiExpanded-Black.ttf',84)
 text_c(d,W/2,400,'THE TWO-PLAYER AUCTION PARTY GAME',fs,PINK)
 shots=['01-home','03-surprise','04-bidding','05-sold']
 S='/Users/lafy/bid-wars/bid-wars/design/store2/'
-raws=['raw-01-home.png','raw-04-item.png','raw-05-bid.png','raw-06-sold.png']
+raws=['raw-01-home.png','food-04-item.png','food-05-bid.png','food-06-sold.png']
 pw=760; ph=int(pw*2778/1284); gap=110; total=4*pw+3*gap; x0=(W-total)//2; y0=640
 for i,r in enumerate(raws):
     s=Image.open(S+r).convert('RGB').resize((pw-28,ph-28),Image.LANCZOS)

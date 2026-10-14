@@ -41,7 +41,14 @@
     },
     "plugins": [
       "expo-font",
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "enableBackgroundPlayback": false,
+          "recordAudioAndroid": false
+        }
+      ],
       "./plugins/withSceneLifecycle.js",
       "expo-iap",
       [

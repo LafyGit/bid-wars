@@ -76,12 +76,12 @@ def compose(raw, l1, l2, c1, c2, out):
 S=[
  ('raw-01-home.png','TWO PLAYERS.','ONE PHONE.',GREEN,INK,'01-home.png'),
  ('raw-03c-landed.png','SPIN FOR','TONIGHT’S TOPIC',PINK,INK,'02-spin.png'),
- ('raw-04-item.png','EVERY ITEM','IS A SURPRISE',GREEN,INK,'03-surprise.png'),
- ('raw-05-bid.png','OUTBID THEM','OR BACK OUT',PINK,INK,'04-bidding.png'),
- ('raw-06-sold.png','SOLD TO THE','HIGHEST BIDDER',GREEN,INK,'05-sold.png'),
- ('raw-07-final.png','THEN SETTLE','WHO WON',PINK,INK,'06-final.png'),
- ('raw-decide.png','CAN’T DECIDE?','WE’LL HELP',GREEN,INK,'07-helper.png'),
- ('raw-02-topics.png','PLENTY FREE.','UNLOCK THE REST.',PINK,INK,'08-topics.png'),
+ ('food-04-item.png','EVERY ITEM','IS A SURPRISE',GREEN,INK,'03-surprise.png'),
+ ('food-05-bid.png','OUTBID THEM','OR BACK OUT',PINK,INK,'04-bidding.png'),
+ ('food-06-sold.png','SOLD TO THE','HIGHEST BIDDER',GREEN,INK,'05-sold.png'),
+ ('food-07-final.png','THEN SETTLE','WHO WON',PINK,INK,'06-final.png'),
+ ('food-decide.png','CAN’T DECIDE?','WE’LL HELP',GREEN,INK,'07-helper.png'),
+ ('raw-02-topics.png','A TOPIC FOR','EVERY CREW',PINK,INK,'08-topics.png'),
 ]
 import os
 os.makedirs('final',exist_ok=True)
