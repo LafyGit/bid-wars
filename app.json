@@ -34,7 +34,13 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "versionCode": 18
+      "versionCode": 18,
+      "permissions": [
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "com.google.android.gms.permission.AD_ID",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "com.google.android.gms.permission.AD_ID"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -116,6 +122,18 @@
     ],
     "runtimeVersion": {
       "policy": "appVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "4b01c977-4cd3-4bd9-8fb7-a8b23fa6a247"
+      }
+    },
+    "owner": "lafyexpo",
+    "updates": {
+      "url": "https://u.expo.dev/4b01c977-4cd3-4bd9-8fb7-a8b23fa6a247",
+      "requestHeaders": {
+        "expo-channel-name": "production"
+      }
     }
   }
 }
