@@ -33,13 +33,9 @@ test('all gaming categories sit in the Gaming group', () => {
   }
 });
 
-test('there is a meaningful free tier in most groups and paid content in every group', () => {
-  const free = CATALOG.filter((c) => c.free);
-  assert.ok(free.length >= 6, 'at least six free categories');
-  for (const g of GROUPS) {
-    const cats = CATALOG.filter((c) => g.categoryIds.includes(c.id));
-    assert.ok(cats.some((c) => !c.free), `${g.id} needs something to sell`);
-  }
-  const freePacks = free.reduce((n, c) => n + c.subtopics.length, 0);
-  assert.ok(freePacks >= 30, `free tier is too small (${freePacks} packs)`);
+test('most packs are free and a few niche categories are Pro', () => {
+  const pro = CATALOG.filter((c) => !c.free);
+  const packs = (cs: typeof CATALOG) => cs.reduce((n, c) => n + c.subtopics.length, 0);
+  assert.ok(pro.length >= 5, 'Pro needs something to unlock');
+  assert.ok(packs(CATALOG.filter((c) => c.free)) > packs(CATALOG) * 0.7, 'the free tier is the bulk of the game');
 });

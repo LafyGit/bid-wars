@@ -1,52 +1,39 @@
 import React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { rewardedAvailable } from '../ads/ads';
-import { GROUPS, groupById, topicById } from '../content/topics';
-import { groupProductId, ownsGroup, ownsPro, PRO_ID } from '../store/entitlements';
+import { CATEGORIES, topicById } from '../content/topics';
+import { ownsPro, PRO_ID } from '../store/entitlements';
 import { useGame } from '../store/GameContext';
 import { colors, layout, withAlpha } from '../theme/tokens';
-import { TextLink } from '../ui/Btn';
+import { CTA, TextLink } from '../ui/Btn';
 import { Enter } from '../ui/Motion';
 import { Screen, useScreenInsets } from '../ui/Screen';
-import { Body, Display, Mono, FitText } from '../ui/Txt';
+import { Body, Display, Mono } from '../ui/Txt';
 
-function Offer({ title, tagline, accent, price, owned, available, featured, onBuy, delay }: {
-  title: string; tagline: string; accent: string; price?: string; owned: boolean; available: boolean; featured?: boolean; onBuy: () => void; delay: number;
-}) {
-  const label = owned ? 'OWNED' : price ?? '—';
+const PRO = '#39FF6A';
+
+function Perk({ title, body, delay }: { title: string; body: string; delay: number }) {
   return (
-    <Enter kind="in" delay={delay} duration={340}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={owned ? `${title}, owned` : `${title}, ${price ?? 'unavailable'}. ${tagline}`}
-        accessibilityState={{ disabled: owned || !available }}
-        disabled={owned || !available}
-        onPress={onBuy}
-        style={({ pressed }) => ({ borderRadius: 24, padding: 18, backgroundColor: featured ? withAlpha(accent, 0.14) : colors.surface, borderWidth: featured ? 2 : 1, borderColor: featured ? accent : colors.line12, opacity: !owned && !available ? 0.55 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] })}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View style={{ flex: 1 }}>
-            {featured && <Mono size={10} color={accent} ls={0.16}>BEST VALUE</Mono>}
-            <FitText text={title} size={19} minSize={13} maxLines={2} wdth={112} upper={false} ls={-0.01} lh={1.15} />
-            <Body size={13} color={colors.ink3} style={{ marginTop: 4 }}>{tagline}</Body>
-          </View>
-          <View style={{ minWidth: 84, height: 44, paddingHorizontal: 14, borderRadius: 14, backgroundColor: owned ? colors.line12 : accent, alignItems: 'center', justifyContent: 'center' }}>
-            <Display size={15} wdth={100} color={owned ? colors.ink2 : colors.bg} ls={0} lh={1.1} numberOfLines={1}>{label}</Display>
-          </View>
-        </View>
-      </Pressable>
+    <Enter kind="in" delay={delay} duration={340} style={{ flexDirection: 'row', gap: 12, padding: 16, borderRadius: 18, backgroundColor: colors.surface }}>
+      <View style={{ width: 8, borderRadius: 4, backgroundColor: PRO }} />
+      <View style={{ flex: 1 }}>
+        <Display size={17} wdth={112} upper={false} ls={0} lh={1.2}>{title}</Display>
+        <Body size={13} color={colors.ink3} style={{ marginTop: 3 }}>{body}</Body>
+      </View>
     </Enter>
   );
 }
 
-/** Unlock more topics: the group pack the player came from, plus Pro (everything). One-time purchases. */
+/** Bid Wars Pro: one purchase, no ads, the bonus packs. Every core pack stays free. */
 export function Paywall() {
   const g = useGame();
   const p = useScreenInsets();
-  const { owned, products, storeStatus, storeMessage, paywallGroup, paywallBack } = g.state;
-  const group = paywallGroup ? groupById(paywallGroup) : null;
-  const available = storeStatus === 'ready';
+  const { owned, products, storeStatus, storeMessage, paywallBack } = g.state;
+  const pro = ownsPro(owned);
+  const price = products[PRO_ID]?.price;
+  const available = storeStatus === 'ready' && !!price;
   const trial = g.state.paywallTopic ? topicById(g.state.paywallTopic) : null;
+  const bonus = CATEGORIES.filter((c) => !c.free && c.topics.length).map((c) => c.title);
   // The rewarded ad loads in the background; poll so the offer appears once it is ready.
   const [adReady, setAdReady] = React.useState(rewardedAvailable());
   React.useEffect(() => {
@@ -57,67 +44,32 @@ export function Paywall() {
     <Screen padX={false} padBottom={false}>
       <View style={{ paddingHorizontal: layout.padX }}>
         <TextLink label="← BACK" onPress={() => g.go(paywallBack === 'paywall' ? 'topics' : paywallBack)} />
-        <Display size={36} lh={1} style={{ marginTop: 10 }}>{'MORE TOPICS,\nMORE WARS'}</Display>
-        <Body size={14} color={colors.ink3} style={{ marginTop: 10 }}>One-time purchases, no subscription. Any purchase also removes ads. Yours on every device with your Apple account.</Body>
+        <Mono color={PRO} style={{ marginTop: 12 }}>ONE-TIME PURCHASE</Mono>
+        <Display size={40} lh={1} style={{ marginTop: 6 }}>{'BID WARS\nPRO'}</Display>
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: layout.padX, paddingTop: 18, paddingBottom: p.bottom + 12, gap: 10 }} showsVerticalScrollIndicator={false}>
-        <Offer
-          title="Bid Wars Pro"
-          tagline="Every topic in every group, plus everything we add later"
-          accent="#39FF6A"
-          featured
-          price={products[PRO_ID]?.price}
-          owned={ownsPro(owned)}
-          available={available && !!products[PRO_ID]}
-          onBuy={() => g.buyProduct(PRO_ID)}
-          delay={60}
-        />
-        {group && (
-          <Offer
-            title={`${group.title} Pack`}
-            tagline={group.subtitle}
-            accent={group.accent}
-            price={products[groupProductId(group.id)]?.price}
-            owned={ownsGroup(owned, group.id)}
-            available={available && !!products[groupProductId(group.id)]}
-            onBuy={() => g.buyProduct(groupProductId(group.id))}
-            delay={120}
-          />
-        )}
-        {!group && GROUPS.map((gr, i) => {
-          const owns = ownsGroup(owned, gr.id);
-          return (
-            <Offer
-              key={gr.id}
-              title={`${gr.title} Pack`}
-              tagline={gr.subtitle}
-              accent={gr.accent}
-              price={products[groupProductId(gr.id)]?.price}
-              owned={owns}
-              available={available && !!products[groupProductId(gr.id)]}
-              onBuy={() => g.buyProduct(groupProductId(gr.id))}
-              delay={120 + i * 50}
-            />
-          );
-        })}
-        {trial && adReady && (
+        <Perk title="No ads, ever" body="No breaks between rounds. Just the next auction." delay={40} />
+        <Perk title="Bonus packs" body={bonus.join(' · ')} delay={90} />
+        <Perk title="Everything we add later" body="New Pro packs land in your app for free." delay={140} />
+        <Enter kind="in" delay={200} duration={340} style={{ marginTop: 6 }}>
+          {pro
+            ? <View style={{ height: 64, borderRadius: 20, backgroundColor: withAlpha(PRO, 0.14), borderWidth: 2, borderColor: PRO, alignItems: 'center', justifyContent: 'center' }}><Display size={18} color={PRO} ls={0.02} lh={1.1}>PRO UNLOCKED</Display></View>
+            : <CTA label={available ? `GET PRO · ${price}` : 'GET PRO'} bg={PRO} height={64} size={19} disabled={!available} style={{ opacity: available ? 1 : 0.5 }} onPress={() => g.buyProduct(PRO_ID)} accessibilityLabel={available ? `Get Bid Wars Pro for ${price}` : 'Bid Wars Pro, unavailable right now'} />}
+        </Enter>
+        <Body size={12} color={colors.ink4} align="center">Every other pack is free to play.</Body>
+        {!pro && trial && adReady && (
           <Pressable accessibilityRole="button" accessibilityLabel={`Watch an ad to play ${trial.title} once`} onPress={g.watchAdForTopic} style={({ pressed }) => ({ borderRadius: 18, padding: 16, borderWidth: 1, borderColor: colors.line14, backgroundColor: pressed ? colors.surfaceHover : 'transparent', alignItems: 'center', gap: 4 })}>
             <Mono color={colors.ink2}>OR WATCH A SHORT AD</Mono>
             <Body size={14} color={colors.ink} weight={700} align="center">Play {trial.title} free this time</Body>
           </Pressable>
         )}
-        {group && (
-          <Pressable accessibilityRole="button" onPress={() => g.openPaywall(null)} style={{ alignSelf: 'center', paddingVertical: 8 }}>
-            <Mono color={colors.ink3}>SEE ALL UNLOCKS</Mono>
-          </Pressable>
-        )}
         {storeStatus === 'unavailable' && <Body size={13} color={colors.ink4} align="center">The App Store isn’t available right now, so purchases are paused. The free packs still work.</Body>}
-        {storeStatus === 'loading' && <Body size={13} color={colors.ink4} align="center">Loading prices…</Body>}
+        {storeStatus === 'loading' && <Body size={13} color={colors.ink4} align="center">Loading price…</Body>}
         {storeMessage && <Body size={13} color={colors.ink2} align="center" accessibilityLiveRegion="polite">{storeMessage}</Body>}
         <Pressable accessibilityRole="button" onPress={g.restorePurchases} style={({ pressed }) => ({ alignSelf: 'center', paddingVertical: 12, paddingHorizontal: 18, borderRadius: 14, borderWidth: 1, borderColor: colors.line14, opacity: pressed ? 0.7 : 1 })}>
           <Mono color={colors.ink2}>RESTORE PURCHASES</Mono>
         </Pressable>
-        <Body size={11} color={colors.ink5} align="center" lh={1.5}>Payment is charged to your Apple account at confirmation. Purchases are one-time and can be restored at any time.</Body>
+        <Body size={11} color={colors.ink5} align="center" lh={1.5}>Payment is charged to your Apple account at confirmation. One-time, no subscription, restorable at any time. Packs bought earlier keep working and stay ad-free.</Body>
       </ScrollView>
     </Screen>
   );

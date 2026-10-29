@@ -11,7 +11,8 @@ test('free categories are always open, paid ones are locked by default', () => {
 });
 
 test('a group pack unlocks only its own group', () => {
-  const g = GROUPS[0], other = GROUPS[1];
+  // Legacy group packs still unlock their own group's Pro categories; take two groups that have some.
+  const [g, other] = GROUPS.filter((gr) => CATALOG.some((c) => gr.categoryIds.includes(c.id) && !c.free));
   const paidInG = CATALOG.find((c) => g.categoryIds.includes(c.id) && !c.free)!;
   const paidInOther = CATALOG.find((c) => other.categoryIds.includes(c.id) && !c.free)!;
   const owned = [groupProductId(g.id)];

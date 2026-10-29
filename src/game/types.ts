@@ -3,9 +3,8 @@ export type Pair<T> = [T, T];
 
 export type Phase = 'hidden' | 'item' | 'auction' | 'result';
 
-export type RoundResult =
-  | { type: 'win'; w: Player; price: number }
-  | { type: 'unclaimed' };
+/** Every item goes to someone. `free` means nobody bid, or the other shelf was full, so it went for $0. */
+export type RoundResult = { type: 'win'; w: Player; price: number; free?: boolean };
 
 export type BidEvent = { p: Player; amount: number };
 
@@ -13,8 +12,7 @@ export type LogEntry = {
   item: string;
   /** Highest amount each player bid on this item (0 if they never bid). */
   bids: Pair<number>;
-  /** 0 / 1 winner, -1 unclaimed */
-  w: Player | -1;
+  w: Player;
   price: number;
   /** Both players bid at least once. */
   contested: boolean;
@@ -23,8 +21,8 @@ export type LogEntry = {
   after: Pair<number>;
 };
 
-/** `price` is what the winner paid; `value` is the highest bid anyone placed on it, a proxy for how much the item was wanted. */
-export type Collected = { name: string; price: number; value: number };
+/** `price` is what the winner paid. The judge never looks at it. */
+export type Collected = { name: string; price: number };
 
 export type RoundState = {
   topicId: string;

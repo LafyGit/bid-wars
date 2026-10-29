@@ -8,11 +8,11 @@ import { Screen } from '../ui/Screen';
 import { Body, Display } from '../ui/Txt';
 
 const RULES: [string, string][] = [
-  ['$20 each', 'Both players get $20 of fake money for the round. Your balance is always on screen.'],
-  ['10 hidden items', 'Items from one subtopic appear one at a time. Nobody knows what’s next.'],
-  ['Bid back and forth', 'Take turns raising by at least $1. Pass to let the other player have it at their bid.'],
-  ['Max 5 items', 'A full shelf can’t bid. Going once, going twice, sold: turn on the 3-second rule in Settings.'],
-  ['You be the judge', 'After ten items, compare collections. The judge weighs in, but you decide.'],
+  ['$20 each', 'Fake money for the round. Your balance is always on screen.'],
+  ['10 hidden items', 'One at a time, from one topic. Nobody knows what’s next.'],
+  ['Bid or pass', 'Raise by $1 or more, or pass and let them have it. Nobody bids? It goes free to whoever has fewer.'],
+  ['5 items each', 'Every item lands on a shelf. Fill yours and the rest go to the other player.'],
+  ['Best shelf wins', 'The judge rates both collections on reviews and reputation, not money. You still tap the winner.'],
 ];
 
 export function HowToPlay() {

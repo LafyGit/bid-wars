@@ -147,14 +147,14 @@ export const nameSize = (name: string, max: number, fitWidth = 330) => {
  * Archivo Condensed Black caps average 0.59em advance, so k = 0.6 (the handoff's 0.5 breaks words on device).
  */
 export const itemSize = (item: string, fitWidth = 290) => {
-  const maxWord = Math.max(...item.split(/[\s-]/).map((w) => w.length), 1);
+  const maxWord = Math.max(...item.split(/\s/).map((w) => w.length), 1);
   return Math.max(28, Math.min(92, Math.floor(fitWidth / (maxWord * 0.6))));
 };
 
 type FitProps = Omit<TextProps, 'children' | 'numberOfLines'> & Omit<Base, 'size'> & { kind?: 'display' | 'body' | 'mono'; text: string; size: number; minSize?: number; maxLines?: number; maxHeight?: number; /** Available width when the parent shrink-wraps its content (so measuring the container would feed back on itself). */ fitWidth?: number; wdth?: Wdth; weight?: any };
 
-/** Break points a wrapping Text may use: whitespace, and just after a hyphen. */
-const pieces = (text: string) => text.split(/\s+/).filter(Boolean).flatMap((w) => w.match(/[^-]+-?|-/g) ?? [w]);
+/** Words that must stay whole. Hyphenated names ("Counter-Strike", "Spider-Man") count as one word, so they shrink to fit rather than break at the hyphen. */
+const pieces = (text: string) => text.split(/\s+/).filter(Boolean);
 
 /**
  * Text that always shows in full and never breaks inside a word. It measures the widest unbreakable

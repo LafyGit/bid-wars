@@ -7,7 +7,6 @@ import { Auction } from './screens/Auction';
 import { Awards } from './screens/Awards';
 import { Browser } from './screens/Browser';
 import { Final } from './screens/Final';
-import { Group } from './screens/Group';
 import { Home } from './screens/Home';
 import { HowToPlay } from './screens/HowToPlay';
 import { MatchIntro } from './screens/MatchIntro';
@@ -30,7 +29,6 @@ export function Root() {
     case 'howto': screen = <HowToPlay />; break;
     case 'setup': screen = <Setup />; break;
     case 'topics': screen = <Topics />; break;
-    case 'group': screen = <Group />; break;
     case 'paywall': screen = <Paywall />; break;
     case 'subtopics': screen = <Subtopics />; break;
     case 'reveal': screen = <TopicReveal />; break;

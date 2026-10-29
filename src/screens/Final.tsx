@@ -42,7 +42,7 @@ function Judge() {
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
-    const input = { topic: topicLabel(g.topic), names: g.names, collections: r.collections, unclaimed: r.log.filter((l) => l.w === -1).map((l) => l.item) };
+    const input = { topic: topicLabel(g.topic), names: g.names, collections: r.collections, ranked: g.topic.items };
     const tiebreak = (g.state.session.rounds % 2) as Player;
     if (!judgeAvailable()) { setV(localVerdict(input, tiebreak)); return; }
     judgeCollections(input).then((res) => alive && setV(res)).catch((e) => { if (alive) { setErr(e instanceof Error ? e.message : 'Judge unavailable'); setV(localVerdict(input, tiebreak)); } });
@@ -79,7 +79,6 @@ export function Final() {
   const r = g.state.round;
   const p = useScreenInsets();
   if (!r) return null;
-  const unclaimed = r.log.filter((l) => l.w === -1).map((l) => l.item);
   return (
     <Screen padX={false} padBottom={false}>
       <Enter kind="in" duration={360} style={{ paddingHorizontal: layout.padX }}>
@@ -91,11 +90,6 @@ export function Final() {
           <CollectionCard p={0} />
           <CollectionCard p={1} />
         </Row>
-        {unclaimed.length > 0 && (
-          <View style={{ marginTop: 10, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.ink6 }}>
-            <Body size={13} color={colors.ink3}>Unclaimed: {unclaimed.join(', ')}</Body>
-          </View>
-        )}
         {g.state.settings.aiJudge && <Judge />}
       </ScrollView>
       <Enter kind="in" delay={300} duration={400} style={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: p.bottom, backgroundColor: colors.bg }}>

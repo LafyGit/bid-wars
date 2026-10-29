@@ -42,7 +42,7 @@ export async function startStore(h: StoreHandlers): Promise<void> {
     if (__DEV__) {
       // Development only (Expo Go / simulator without StoreKit): a fake store so the whole flow can be tried.
       const fake: Record<string, ProductInfo> = {};
-      ALL_PRODUCT_IDS.forEach((id) => { fake[id] = { id, price: id.endsWith('.pro') ? '$7.99' : '$2.99', title: id }; });
+      ALL_PRODUCT_IDS.forEach((id) => { fake[id] = { id, price: '$2.99', title: id }; });
       h.onProducts(fake); h.onStatus('ready'); devStore = true; return;
     }
     h.onStatus('unavailable'); return;

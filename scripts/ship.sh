@@ -2,6 +2,8 @@
 # Low-priority archive + TestFlight upload (fanless Air: nice 19, -jobs 2). Build number comes from app.json.
 cd "$(dirname "$0")/.."
 export PATH=/Users/lafy/.nvm/versions/node/v24.16.0/bin:$PATH
+# Expo's prebuilt module xcframeworks are built with an older Swift than Xcode 27.1 can import; build them from source.
+export EXPO_USE_PRECOMPILED_MODULES=0
 N=$(node -p "require('./app.json').expo.ios.buildNumber")
 V=$(node -p "require('./app.json').expo.version")
 echo "Shipping $V ($N)"

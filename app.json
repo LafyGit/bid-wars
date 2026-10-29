@@ -2,7 +2,7 @@
   "expo": {
     "name": "Bid Wars",
     "slug": "bid-wars",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -20,7 +20,7 @@
         "UIViewControllerBasedStatusBarAppearance": false
       },
       "appleTeamId": "CN8378NUAA",
-      "buildNumber": "17",
+      "buildNumber": "18",
       "config": {
         "usesNonExemptEncryption": false
       }
@@ -34,7 +34,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "versionCode": 17
+      "versionCode": 18
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -111,7 +111,11 @@
         {
           "userTrackingPermission": "Bid Wars uses this to show ads that are more relevant to you. Saying no still lets you play everything."
         }
-      ]
-    ]
+      ],
+      "expo-updates"
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }

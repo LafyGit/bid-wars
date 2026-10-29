@@ -38,8 +38,15 @@ export function revealItem(s: RoundState): RoundState {
 
 export function startBidding(s: RoundState): RoundState {
   if (s.phase !== 'item') return s;
-  return { ...s, phase: 'auction', turn: s.opener, price: 0, leader: -1, passed: [false, false], history: [], going: 0 };
+  const next: RoundState = { ...s, phase: 'auction', turn: s.opener, price: 0, leader: -1, passed: [false, false], history: [], going: 0 };
+  // One shelf is full: everything left goes to the other player for free, so both end with exactly 5.
+  const full = ([0, 1] as Player[]).find((p) => atItemCap(s, p));
+  return full === undefined ? next : resolve(next, { type: 'win', w: other(full), price: 0, free: true });
 }
+
+/** Nobody bid: the item still has to go somewhere. Fewer items takes it free; on a tie the opener does. */
+const freeTaker = (s: RoundState): Player =>
+  s.collections[0].length === s.collections[1].length ? s.opener : s.collections[0].length < s.collections[1].length ? 0 : 1;
 
 /** Lowest legal bid for the next raise. */
 export const minBid = (s: RoundState) => (s.leader === -1 ? MIN_RAISE : s.price + MIN_RAISE);
@@ -72,7 +79,7 @@ export function pass(s: RoundState, p: Player): RoundState {
   passed[p] = true;
   const next: RoundState = { ...s, passed, going: 0 };
   if (s.leader !== -1) return resolve(next, { type: 'win', w: s.leader, price: s.price });
-  if (passed[other(p)]) return resolve(next, { type: 'unclaimed' });
+  if (passed[other(p)]) return resolve(next, { type: 'win', w: freeTaker(s), price: 0, free: true });
   return { ...next, turn: other(p) };
 }
 
@@ -88,16 +95,12 @@ function resolve(s: RoundState, res: RoundResult): RoundState {
   const best: Pair<number> = [0, 0];
   s.history.forEach((b) => { best[b.p] = Math.max(best[b.p], b.amount); });
   const base: RoundState = { ...s, phase: 'result', result: res, resultStage: 0, prev: [s.budgets[0], s.budgets[1]] };
-  if (res.type === 'win') {
-    const budgets: Pair<number> = [s.budgets[0], s.budgets[1]];
-    budgets[res.w] -= res.price;
-    const collections: Pair<typeof s.collections[0]> = [s.collections[0].slice(), s.collections[1].slice()];
-    collections[res.w].push({ name: item, price: res.price, value: Math.max(best[0], best[1], res.price) });
-    const entry: LogEntry = { item, bids: best, w: res.w, price: res.price, contested: best[0] > 0 && best[1] > 0, raises: s.history.length, after: [budgets[0], budgets[1]] };
-    return { ...base, budgets, collections, log: s.log.concat(entry) };
-  }
-  const entry: LogEntry = { item, bids: best, w: -1, price: 0, contested: false, raises: 0, after: [s.budgets[0], s.budgets[1]] };
-  return { ...base, log: s.log.concat(entry) };
+  const budgets: Pair<number> = [s.budgets[0], s.budgets[1]];
+  budgets[res.w] -= res.price;
+  const collections: Pair<typeof s.collections[0]> = [s.collections[0].slice(), s.collections[1].slice()];
+  collections[res.w].push({ name: item, price: res.price });
+  const entry: LogEntry = { item, bids: best, w: res.w, price: res.price, contested: best[0] > 0 && best[1] > 0, raises: s.history.length, after: [budgets[0], budgets[1]] };
+  return { ...base, budgets, collections, log: s.log.concat(entry) };
 }
 
 export function showVerdict(s: RoundState): RoundState {
@@ -134,7 +137,7 @@ export function chooseWinner(s: RoundState, score: Pair<number>, session: Sessio
     s.collections[i].forEach((c) => {
       se.biggest[i] = Math.max(se.biggest[i], c.price);
       const ch = se.cheapest[i];
-      if (ch === null || c.price < ch) se.cheapest[i] = c.price;
+      if (c.price > 0 && (ch === null || c.price < ch)) se.cheapest[i] = c.price; // free hand-offs aren't bargains
     });
   });
   return { score: sc, session: se };
@@ -142,11 +145,11 @@ export function chooseWinner(s: RoundState, score: Pair<number>, session: Sessio
 
 /** Post-round awards. Only the ones that apply, in fixed order. */
 export function awardsList(s: RoundState): Award[] {
-  const wins = s.log.filter((l) => l.w >= 0);
+  const wins = s.log.filter((l) => l.price > 0);
   const out: Award[] = [];
   if (wins.length) {
     const big = wins.reduce((m, l) => (l.price > m.price ? l : m), wins[0]);
-    out.push({ title: 'BIG SPENDER', w: (big.w === 1 ? 1 : 0) as Player, desc: `$${big.price} on ${big.item}` });
+    out.push({ title: 'BIG SPENDER', w: big.w, desc: `$${big.price} on ${big.item}` });
   }
   const cheap = ([0, 1] as Player[]).map((i) => wins.filter((l) => l.w === i && l.price <= 1));
   let bk: Player | -1;
@@ -169,7 +172,7 @@ export function awardsList(s: RoundState): Award[] {
     out.push({ title: 'AUCTION THIEF', w, desc: `Won ${ct[w]} contested items` });
   }
   const war = wins.reduce((m, l) => (l.raises > m.raises ? l : m), wins[0]);
-  if (war && war.raises >= 6) out.push({ title: 'WAR MACHINE', w: (war.w === 1 ? 1 : 0) as Player, desc: `Outlasted ${war.raises} bids for ${war.item}` });
+  if (war && war.raises >= 6) out.push({ title: 'WAR MACHINE', w: war.w, desc: `Outlasted ${war.raises} bids for ${war.item}` });
   return out;
 }
 
@@ -179,8 +182,8 @@ export function quip(s: RoundState, names: Pair<string>): string {
   if (!R) return '';
   const item = s.items[s.idx];
   const left = ITEMS - 1 - s.idx;
-  if (R.type === 'unclaimed') return 'Nobody wanted it. Moving on.';
   const w = names[R.w], l = names[1 - R.w], wb = s.budgets[R.w], lb = s.budgets[1 - R.w];
+  if (R.free) return atItemCap(s, other(R.w)) ? `${l}'s shelf is full. ${item} goes to ${w} free.` : `Nobody bid. ${w} gets ${item} free.`;
   const raises = s.history.length;
   if (s.going === 3) return `${l} blinked. Sold on the three count.`;
   if (R.price >= 9) return `${w} spent $${R.price} on ${item}. Bold.`;

@@ -54,9 +54,9 @@ assets/sfx/                 Placeholder low-gain tones (swap for real cues later
   average 0.93em and Condensed Black 0.59em, so `nameSize` uses 0.9 and `itemSize` uses 0.6 per character, with
   `adjustsFontSizeToFit` as a guard.
 - **Open bidding.** Both players share the screen. The reducer enforces turn order, the $1 minimum raise, the
-  budget cap and the 5-item cap; a pass concedes the item to the leader (or leaves it unclaimed when nobody bid).
+  budget cap and the 5-item cap; a pass concedes the item to the leader. Nobody bid? It goes free to the player with fewer items (the opener on a tie), and once a shelf is full the rest go to the other player, so both always end with 5.
   The optional 3-second rule (Settings) counts "going once, going twice, sold" after every bid.
-- **Judging.** The judge always picks a winner (no draws) and ranks on the quality of the picks and the best single pick, never on money left. Without an API key the built-in judge uses each item's highest bid as a demand signal; with a key Claude judges the items themselves.
+- **Judging.** The judge always picks a winner (no draws) and ranks on how good the picks are, best pick first, never on money. Without an API key the built-in judge uses each pack's order: catalog items are listed best-first by reviews and popularity, so keep new items in that order. With a key Claude judges the items themselves.
 - **AI judge.** Set `EXPO_PUBLIC_ANTHROPIC_API_KEY` in `.env` (see `.env.example`) and the final screen asks
   Claude (`claude-opus-5`) for a verdict on the two collections. Without a key a built-in judge rules instead.
   The key ships inside the bundle, which is fine for a private TestFlight build; front it with a proxy before a

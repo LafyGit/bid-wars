@@ -2,12 +2,13 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { Collected, Pair, Player } from '../game/types';
 
 /**
- * The judge reads both collections at the end of a round and picks a winner on the QUALITY of what each
- * player collected, especially their best picks. Money left over is deliberately not part of the verdict.
+ * The judge reads both collections at the end of a round and picks a winner on how good the items are in the
+ * real world: reviews, ratings, fan and critic consensus. Prices paid and money left are never part of it.
  * It never calls a draw. Advice only: the players still tap the winner.
  *
- * Key: EXPO_PUBLIC_ANTHROPIC_API_KEY (see .env.example). This ships the key inside the app bundle,
- * which is fine for a private TestFlight build; put a small proxy in front of it before a public release.
+ * Without a key the built-in judge uses each pack's curated order (catalog items are listed best-first by
+ * consensus). Key: EXPO_PUBLIC_ANTHROPIC_API_KEY (see .env.example); it ships inside the bundle, so put a
+ * small proxy in front of it before turning it on in a public release.
  */
 const API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
 export const judgeAvailable = () => !!API_KEY;
@@ -16,35 +17,35 @@ export type JudgeInput = {
   topic: string;
   names: Pair<string>;
   collections: Pair<Collected[]>;
-  unclaimed: string[];
+  /** Every item in the pack, best first. */
+  ranked: string[];
 };
 
 export type Verdict = { winner: Player; headline: string; reasoning: string; roast: string };
 
-const SYSTEM = `You are the judge of Bid Wars, a two-player party game played on one phone. Two friends bid fake money on hidden items from one topic. Now both collections are on the table and they are arguing about who has the better one.
+const SYSTEM = `You are the judge of Bid Wars, a two-player party game played on one phone. Two friends bid fake money on hidden items from one topic and each ended up with five. Now both collections are on the table and they are arguing about who has the better one.
 
-Decide who has the better collection by the QUALITY of the items: how desirable, iconic, rare or impressive each pick is within the topic, and above all how strong each player's best pick is. Depth matters too, but one standout pick can beat several average ones. Do NOT consider how much money anyone has left. The price paid is only a weak hint; a player who got something great cheaply did well. The "wanted" figure is the highest bid anyone placed on an item, so it shows how contested it was.
+Decide who has the better collection purely on how good the items are in the real world: online reviews and ratings, critic and fan consensus, popularity, prestige and how iconic each one is within the topic. Weigh each player's best pick most, then the overall quality of all five. Money is irrelevant: you are not told what anyone paid or has left, and it must not matter.
 
-You must pick a winner. A draw is not allowed. If it is close, decide on the best single pick, then on overall quality. If one player has no items, the other wins.
+You must pick a winner. A draw is not allowed. If it is close, decide on the best single pick.
 
 Keep it short and spoken, like a friend at the table. No markdown, no lists, no emojis. Use the players' names.
 
 Reply with JSON only, matching exactly:
-{"winner": 0 or 1, "headline": "max 8 words", "reasoning": "2 to 3 sentences that name the specific picks that decided it", "roast": "one playful sentence aimed at the loser"}`;
+{"winner": 0 or 1, "headline": "max 8 words", "reasoning": "2 to 3 sentences that name the specific picks that decided it and why they rate higher", "roast": "one playful sentence aimed at the loser"}`;
 
 export async function judgeCollections(input: JudgeInput): Promise<Verdict> {
   if (!API_KEY) throw new Error('No API key');
   const client = new Anthropic({ apiKey: API_KEY, dangerouslyAllowBrowser: true });
-  const fmt = (c: Collected[]) => (c.length ? c.map((x) => `${x.name} (paid $${x.price}, wanted up to $${x.value})`).join('; ') : 'nothing');
+  const fmt = (c: Collected[]) => (c.length ? c.map((x) => x.name).join('; ') : 'nothing');
   const user = [
     `Topic: ${input.topic}`,
     `${input.names[0]} (player 0) collected: ${fmt(input.collections[0])}.`,
     `${input.names[1]} (player 1) collected: ${fmt(input.collections[1])}.`,
-    input.unclaimed.length ? `Nobody bought: ${input.unclaimed.join(', ')}.` : 'Every item sold.',
   ].join('\n');
 
   const response = await client.messages.create({
-    model: 'claude-opus-5',
+    model: 'claude-opus-5-5',
     max_tokens: 600,
     output_config: { effort: 'low' },
     system: SYSTEM,
@@ -59,40 +60,41 @@ export async function judgeCollections(input: JudgeInput): Promise<Verdict> {
   return { winner, headline: String(v.headline || ''), reasoning: String(v.reasoning || ''), roast: String(v.roast || '') };
 }
 
-/** How good a collection looks without a model: demand for what they got, with the best pick counting most. */
-export function collectionScore(c: Collected[]): { total: number; best: number } {
-  const values = c.map((x) => x.value).sort((a, b) => b - a);
-  const best = values[0] ?? 0;
-  // Top three picks count fully, the rest at half: quality over quantity.
-  const total = values.reduce((s, v, i) => s + (i < 3 ? v : v * 0.5), 0) + best * 1.5;
-  return { total, best };
+/** 1 for the pack's best item down to just above 0 for its weakest; unknown names sit in the middle. */
+export function quality(name: string, ranked: readonly string[]): number {
+  const i = ranked.indexOf(name);
+  return i < 0 ? 0.5 : 1 - i / ranked.length;
 }
 
-/**
- * Offline stand-in when no key is configured. It cannot know which items are truly better, so it uses how
- * contested each item was (the highest bid placed on it) and the best single pick. Money left is ignored.
- * Never returns a draw. `tiebreak` decides only a perfect tie.
- */
+/** How good a collection is: the best pick counts extra on top of every pick's quality. */
+export function collectionScore(c: Collected[], ranked: readonly string[]): { total: number; best: number; top: Collected | null } {
+  let top: Collected | null = null, best = 0, total = 0;
+  for (const x of c) {
+    const q = quality(x.name, ranked);
+    total += q;
+    if (!top || q > best) { top = x; best = q; }
+  }
+  return { total: total + best * 1.5, best, top };
+}
+
+/** Built-in judge: ranks on each pack's consensus order. Never returns a draw; `tiebreak` decides only a perfect tie. */
 export function localVerdict(input: JudgeInput, tiebreak: Player = 0): Verdict {
   const [na, nb] = input.names;
-  const sa = collectionScore(input.collections[0]);
-  const sb = collectionScore(input.collections[1]);
+  const sa = collectionScore(input.collections[0], input.ranked);
+  const sb = collectionScore(input.collections[1], input.ranked);
   let w: Player;
   if (sa.total !== sb.total) w = sa.total > sb.total ? 0 : 1;
   else if (sa.best !== sb.best) w = sa.best > sb.best ? 0 : 1;
-  else if (input.collections[0].length !== input.collections[1].length) w = input.collections[0].length > input.collections[1].length ? 0 : 1;
   else w = tiebreak;
   const [wn, ln] = w === 0 ? [na, nb] : [nb, na];
-  const wc = input.collections[w], lc = input.collections[1 - w];
-  const top = (c: Collected[]) => c.reduce<Collected | null>((m, x) => (!m || x.value > m.value ? x : m), null);
-  const wt = top(wc), lt = top(lc);
-  const reasoning = wt
-    ? `${wn} takes it on the strength of ${wt.name}, the most contested pick of the round${wc.length > 1 ? `, backed up by ${wc.length - 1} more` : ''}. ${lt ? `${ln}'s best was ${lt.name}, which just wasn't enough.` : `${ln} didn't get a single item.`}`
+  const [ws, ls] = w === 0 ? [sa, sb] : [sb, sa];
+  const reasoning = ws.top
+    ? `${ws.top.name} is the best-rated pick on the table, and ${wn}'s whole shelf rates higher overall. ${ls.top ? `${ln}'s best was ${ls.top.name}, which reviewers and fans rank lower.` : `${ln} didn't get a single item.`}`
     : `${wn} wins by default: neither collection had much to judge.`;
   return {
     winner: w,
     headline: `${wn} has the better collection`,
     reasoning,
-    roast: lc.length === 0 ? `${ln} spent the whole auction watching. Bold strategy.` : `${ln}, quantity isn't quality.`,
+    roast: ws.best - ls.best > 0.4 ? `${ln}, the internet has spoken.` : `${ln}, close, but the reviews don't lie.`,
   };
 }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { categoryById, groupOfCategory } from '../content/topics';
+import { categoryById } from '../content/topics';
 import { decideCopy } from '../content/decide';
 import { DecideCard, DecideSheet } from '../ui/DecideSheet';
 import { pickTopicId } from '../game/pick';
@@ -16,14 +16,13 @@ export function Subtopics() {
   const g = useGame();
   const p = useScreenInsets();
   const c = categoryById(g.state.categoryId);
-  const group = groupOfCategory(c.id);
   const surprise = () => g.chooseTopic(pickTopicId(c.topics.map((t) => t.id), g.state.recentTopics));
   const copy = decideCopy(c.id);
   const [deciding, setDeciding] = useState(false);
   return (
     <Screen padX={false} padBottom={false}>
       <View style={{ paddingHorizontal: layout.padX }}>
-        <TextLink label={`← ${group.title.toUpperCase()}`} onPress={() => g.openGroup(group.id)} />
+        <TextLink label="← TOPICS" onPress={() => g.go('topics')} />
         <Mono color={c.accent} style={{ marginTop: 10 }}>{c.title}</Mono>
         <Display size={34} lh={0.92} style={{ marginTop: 4 }}>PICK A LANE</Display>
       </View>

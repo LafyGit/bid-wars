@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 
-export type HapticEvent = 'adjust' | 'lock' | 'tick' | 'reveal' | 'win' | 'tie' | 'final' | 'land' | 'unclaimed' | 'nav';
+export type HapticEvent = 'adjust' | 'lock' | 'tick' | 'reveal' | 'win' | 'tie' | 'final' | 'land' | 'nav';
 
 let enabled = true;
 export const setHapticsEnabled = (on: boolean) => { enabled = on; };
@@ -16,7 +16,6 @@ export function haptic(e: HapticEvent) {
     case 'tick':
     case 'reveal':
     case 'nav':
-    case 'unclaimed': return run(Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light));
     case 'land': return run(Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid));
     case 'win': return run(Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
     case 'tie':

@@ -33,24 +33,24 @@ export function MatchIntro() {
       </Row>
       <View style={{ flex: 1, justifyContent: 'center', gap: 4 }}>
         {/* Sizes come from nameSize(); no auto-shrink, which misbehaves on iOS 27. */}
-        <Enter kind="left" duration={460} style={{ width: '100%' }}><FitText text={n1} size={nameSize(n1, 84, fit)} minSize={20} maxLines={2} color={colors.p1} ls={-0.04} lh={1.1} /></Enter>
-        <Enter kind="pop" delay={300} duration={400} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginVertical: 10 }}>
+        <Enter kind="left" duration={360} style={{ width: '100%' }}><FitText text={n1} size={nameSize(n1, 84, fit)} minSize={20} maxLines={2} color={colors.p1} ls={-0.04} lh={1.1} /></Enter>
+        <Enter kind="pop" delay={150} duration={300} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginVertical: 10 }}>
           <View style={{ flex: 1, height: 2, backgroundColor: colors.line20 }} />
           <Display size={26} ls={0} lh={1.1}>VS</Display>
           <View style={{ flex: 1, height: 2, backgroundColor: colors.line20 }} />
         </Enter>
-        <Enter kind="right" delay={120} duration={460} style={{ width: '100%' }}><FitText text={n2} size={nameSize(n2, 84, fit)} minSize={20} maxLines={2} color={colors.p2} ls={-0.04} lh={1.1} align="right" /></Enter>
+        <Enter kind="right" delay={60} duration={360} style={{ width: '100%' }}><FitText text={n2} size={nameSize(n2, 84, fit)} minSize={20} maxLines={2} color={colors.p2} ls={-0.04} lh={1.1} align="right" /></Enter>
         <Row gap={10} style={{ marginTop: 34 }}>
-          <Tile big="$20" label="EACH" delay={480} />
-          <Tile big="10" label="HIDDEN ITEMS" delay={520} />
-          <Tile big="5" label="MAX EACH" delay={560} />
+          <Tile big="$20" label="EACH" delay={220} />
+          <Tile big="10" label="HIDDEN ITEMS" delay={250} />
+          <Tile big="5" label="ITEMS EACH" delay={280} />
         </Row>
-        <Enter kind="in" delay={640} duration={400} style={{ marginTop: 22 }}>
+        <Enter kind="in" delay={300} duration={300} style={{ marginTop: 22 }}>
           <Mono color={accent} ls={0.16}>ONE RULE</Mono>
           <Display size={25} wdth={118} ls={-0.01} lh={1.05} style={{ marginTop: 6 }}>OUTBID THEM OR BACK OUT.</Display>
         </Enter>
       </View>
-      <Enter kind="in" delay={760} duration={400}>
+      <Enter kind="in" delay={340} duration={300}>
         <CTA label="START AUCTION" bg={accent} height={66} size={20} onPress={g.startRound} />
       </Enter>
     </Screen>

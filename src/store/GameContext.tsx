@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
 import { AccessibilityInfo } from 'react-native';
-import { GROUPS, TOPICS, groupOfCategory, randomTopic, topicById, type Topic } from '../content/topics';
+import { TOPICS, randomTopic, topicById, type Topic } from '../content/topics';
 import * as R from '../game/round';
 import type { Pair, Player, RoundState, Session, Settings } from '../game/types';
 import { haptic, setHapticsEnabled } from '../fx/haptics';
@@ -14,7 +14,7 @@ import type { ProductInfo, StoreStatus } from './purchases';
 
 export type Screen =
   | 'splash' | 'home' | 'howto' | 'setup' | 'topics' | 'subtopics' | 'reveal' | 'intro'
-  | 'auction' | 'final' | 'winner' | 'awards' | 'browser' | 'settings' | 'group' | 'paywall';
+  | 'auction' | 'final' | 'winner' | 'awards' | 'browser' | 'settings' | 'paywall';
 
 export type AppState = {
   hydrated: boolean;
@@ -26,7 +26,6 @@ export type AppState = {
   score: Pair<number>;
   session: Session;
   settings: Settings;
-  groupId: string;
   categoryId: string;
   topicId: string;
   round: RoundState | null;
@@ -45,8 +44,6 @@ export type AppState = {
   products: Record<string, ProductInfo>;
   storeStatus: StoreStatus;
   storeMessage: string | null;
-  /** Group the paywall was opened from, so it can lead with that group's pack. */
-  paywallGroup: string | null;
   paywallBack: Screen;
   /** Locked topic that sent the player to the paywall, offered as a one-off rewarded-ad trial. */
   paywallTopic: string | null;
@@ -66,7 +63,6 @@ const initial: AppState = {
   score: [0, 0],
   session: R.newSession(),
   settings: DEFAULT_SETTINGS,
-  groupId: GROUPS[0].id,
   categoryId: TOPICS[0].categoryId,
   topicId: TOPICS[0].id,
   round: null,
@@ -83,7 +79,6 @@ const initial: AppState = {
   products: {},
   storeStatus: 'loading',
   storeMessage: null,
-  paywallGroup: null,
   paywallBack: 'topics',
   paywallTopic: null,
   trialTopic: null,
@@ -99,7 +94,6 @@ type Action =
   | { type: 'setting'; key: keyof Settings; value: boolean }
   | { type: 'resetConfirm'; on: boolean }
   | { type: 'resetScore' }
-  | { type: 'group'; id: string }
   | { type: 'category'; id: string }
   | { type: 'spin'; topicId: string; idx: number; landed: boolean; reel?: number[] }
   | { type: 'spinTick'; idx: number; landed: boolean }
@@ -112,7 +106,7 @@ type Action =
   | { type: 'products'; products: Record<string, ProductInfo> }
   | { type: 'storeStatus'; status: StoreStatus }
   | { type: 'storeMessage'; message: string | null }
-  | { type: 'paywall'; group: string | null; back: Screen; topic?: string | null }
+  | { type: 'paywall'; back: Screen; topic?: string | null }
   | { type: 'trial'; topic: string | null };
 
 function reducer(s: AppState, a: Action): AppState {
@@ -126,8 +120,7 @@ function reducer(s: AppState, a: Action): AppState {
     case 'setting': return { ...s, settings: { ...s.settings, [a.key]: a.value } };
     case 'resetConfirm': return { ...s, confirmReset: a.on };
     case 'resetScore': return { ...s, score: [0, 0], session: R.newSession(), confirmReset: false };
-    case 'group': return { ...s, groupId: a.id, screen: 'group', menu: false, collOpen: false };
-    case 'category': return { ...s, categoryId: a.id, groupId: groupOfCategory(a.id).id, screen: 'subtopics', menu: false, collOpen: false };
+    case 'category': return { ...s, categoryId: a.id, screen: 'subtopics', menu: false, collOpen: false };
     case 'spin': return { ...s, topicId: a.topicId, reveal: { idx: a.idx, landed: a.landed, reel: a.reel }, screen: 'reveal', menu: false, collOpen: false };
     case 'spinTick': return { ...s, reveal: { ...s.reveal, idx: a.idx, landed: a.landed } };
     case 'round': return { ...s, round: a.round };
@@ -138,7 +131,7 @@ function reducer(s: AppState, a: Action): AppState {
     case 'products': return { ...s, products: a.products };
     case 'storeStatus': return { ...s, storeStatus: a.status };
     case 'storeMessage': return { ...s, storeMessage: a.message };
-    case 'paywall': return { ...s, screen: 'paywall', paywallGroup: a.group, paywallBack: a.back, paywallTopic: a.topic ?? null, storeMessage: null, menu: false, collOpen: false };
+    case 'paywall': return { ...s, screen: 'paywall', paywallBack: a.back, paywallTopic: a.topic ?? null, storeMessage: null, menu: false, collOpen: false };
     case 'trial': return { ...s, trialTopic: a.topic };
     case 'roundWon': return { ...s, roundWinner: a.w, score: a.score, session: a.session, lastRound: a.session.rounds, screen: 'winner', winnerBurst: s.winnerBurst + 1, menu: false, collOpen: false };
   }
@@ -158,7 +151,6 @@ export type Game = {
   toggleSound: () => void;
   setSetting: (k: keyof Settings, v: boolean) => void;
   resetScore: () => void;
-  openGroup: (id: string) => void;
   openCategory: (id: string) => void;
   startRandom: () => void;
   landSpin: () => void;
@@ -177,7 +169,7 @@ export type Game = {
   finishRound: () => void;
   /** Rewarded ad on the paywall: watch it to play the locked topic that opened the paywall. */
   watchAdForTopic: () => void;
-  openPaywall: (group?: string | null) => void;
+  openPaywall: () => void;
   buyProduct: (id: string) => void;
   restorePurchases: () => void;
   isUnlocked: (topic: Topic) => boolean;
@@ -239,7 +231,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     })();
     AccessibilityInfo.isReduceMotionEnabled().then((on) => alive && dispatch({ type: 'osReducedMotion', on })).catch(() => {});
     const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', (on) => dispatch({ type: 'osReducedMotion', on }));
-    const t = setTimeout(() => { if (stateRef.current.screen === 'splash') dispatch({ type: 'go', screen: 'home' }); }, 1700);
+    const t = setTimeout(() => { if (stateRef.current.screen === 'splash') dispatch({ type: 'go', screen: 'home' }); }, 1000);
     return () => { alive = false; sub.remove(); clearTimeout(t); clearTimers(); };
   }, [clearTimers]);
 
@@ -278,7 +270,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     /** After an item resolves: sound, haptic, then the verdict beat. */
     const afterResolve = (r: RoundState) => {
       stopGoing();
-      if (r.result?.type === 'win') { sfx('win'); haptic('win'); } else { haptic('unclaimed'); }
+      sfx('win'); haptic('win');
       later(() => setRound(R.showVerdict), VERDICT_DELAY);
     };
 
@@ -323,7 +315,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         save(KEYS.score, [0, 0]); save(KEYS.session, R.newSession());
         dispatch({ type: 'resetScore' });
       },
-      openGroup: (id) => { haptic('nav'); dispatch({ type: 'group', id }); },
       openCategory: (id) => { haptic('nav'); dispatch({ type: 'category', id }); },
       startRandom: () => {
         clearTimers();
@@ -361,7 +352,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const wanted = topicById(id);
         if (!topicUnlocked(wanted, stateRef.current.owned) && stateRef.current.trialTopic !== id) {
           haptic('nav');
-          dispatch({ type: 'paywall', group: groupOfCategory(wanted.categoryId).id, back: stateRef.current.screen, topic: id });
+          dispatch({ type: 'paywall', back: stateRef.current.screen, topic: id });
           return;
         }
         dispatch({ type: 'spin', topicId: id, idx: TOPICS.findIndex((t) => t.id === id), landed: true });
@@ -386,7 +377,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         setRound(R.revealItem);
         sfx('reveal'); haptic('reveal');
       },
-      startBidding: () => { setRound(R.startBidding); haptic('nav'); },
+      startBidding: () => {
+        haptic('nav');
+        const nr = setRound(R.startBidding);
+        if (nr?.phase === 'result') afterResolve(nr);
+      },
       bid: (p, amount) => {
         const before = stateRef.current.round;
         if (!before || !R.canBid(before, p)) return;
@@ -425,7 +420,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       },
       toggleColl: () => dispatch({ type: 'coll', open: !stateRef.current.collOpen }),
       toggleMenu: () => dispatch({ type: 'menu', open: !stateRef.current.menu }),
-      openPaywall: (group = null) => { haptic('nav'); dispatch({ type: 'paywall', group, back: stateRef.current.screen === 'paywall' ? stateRef.current.paywallBack : stateRef.current.screen }); },
+      openPaywall: () => { haptic('nav'); dispatch({ type: 'paywall', back: stateRef.current.screen === 'paywall' ? stateRef.current.paywallBack : stateRef.current.screen }); },
       buyProduct: (id) => { haptic('lock'); store.buy(id); },
       restorePurchases: () => { store.restore(); },
       isUnlocked: (t) => topicUnlocked(t, stateRef.current.owned),

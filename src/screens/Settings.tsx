@@ -34,8 +34,8 @@ export function Settings() {
         <ToggleRow label="Sound" sub="Reveal, bid, going-once and win cues" value={s.sound} onChange={(v) => g.setSetting('sound', v)} />
         <ToggleRow label="Haptics" sub="Subtle taps on bids, passes and wins" value={s.haptics} onChange={(v) => g.setSetting('haptics', v)} />
         <ToggleRow label="Reduced motion" sub="Skips flips, bursts and the topic spin" value={s.reducedMotion} onChange={(v) => g.setSetting('reducedMotion', v)} />
-        <RowBtn label={ownsPro(g.state.owned) ? 'Bid Wars Pro' : 'Unlock more topics'} right={ownsPro(g.state.owned) ? 'Unlocked ✓' : 'See what is inside →'} onPress={() => g.openPaywall(null)} />
-        <RowBtn label="Restore purchases" right="Already bought? →" onPress={() => { g.restorePurchases(); g.openPaywall(null); }} />
+        <RowBtn label="Bid Wars Pro" right={ownsPro(g.state.owned) ? 'Unlocked ✓' : 'No ads, bonus packs →'} onPress={() => g.openPaywall()} />
+        <RowBtn label="Restore purchases" right="Already bought? →" onPress={() => { g.restorePurchases(); g.openPaywall(); }} />
         {privacyOptionsRequired() && <RowBtn label="Privacy choices" right="Ad consent →" onPress={openPrivacyOptions} />}
         <RowBtn label="Change player names" right={`${n1} & ${n2} →`} onPress={g.openSetup} />
         <RowBtn

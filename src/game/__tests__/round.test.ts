@@ -25,7 +25,7 @@ test('opener bids, other passes: sold to the leader at their bid', () => {
   const s = play(fresh(), [3, 'p']);
   assert.deepEqual(s.result, { type: 'win', w: 0, price: 3 });
   assert.deepEqual(s.budgets, [17, 20]);
-  assert.deepEqual(s.collections[0], [{ name: 'Pizza', price: 3, value: 3 }]);
+  assert.deepEqual(s.collections[0], [{ name: 'Pizza', price: 3 }]);
   assert.equal(s.log[0].contested, false);
   assert.equal(s.log[0].raises, 1);
 });
@@ -57,12 +57,42 @@ test('each bid must beat the price by at least $1 and stay within budget', () =>
   assert.equal(s.leader, 1);
 });
 
-test('both pass with no bid: unclaimed', () => {
-  const s = play(fresh(), ['p', 'p']);
-  assert.deepEqual(s.result, { type: 'unclaimed' });
+test('both pass with no bid: it goes free, to the opener on a tie and to fewer items otherwise', () => {
+  let s = play(fresh(), ['p', 'p']);
+  assert.deepEqual(s.result, { type: 'win', w: 0, price: 0, free: true });
   assert.deepEqual(s.budgets, [20, 20]);
-  assert.equal(s.log[0].w, -1);
-  assert.equal(quip(s, NAMES), 'Nobody wanted it. Moving on.');
+  assert.equal(quip(s, NAMES), 'Nobody bid. Lafy gets Pizza free.');
+  s = play(nextItem(s), ['p', 'p']);
+  assert.deepEqual(s.result, { type: 'win', w: 1, price: 0, free: true }, 'Dhari has fewer items');
+});
+
+test('every item is claimed and both players end with exactly 5, whatever they do', () => {
+  let seed = 7;
+  const rand = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  for (let game = 0; game < 300; game++) {
+    let s = fresh();
+    for (let i = 0; i < 10; i++) {
+      s = startBidding(revealItem(s));
+      for (let guard = 0; s.phase === 'auction' && guard < 100; guard++) {
+        const p = s.turn;
+        s = canBid(s, p) && rand() < 0.5 ? placeBid(s, p, minBid(s) + Math.floor(rand() * 3)) : pass(s, p);
+        if (s.phase === 'auction' && s.turn === p && !s.passed[p]) s = pass(s, p); // over-budget bid was rejected
+      }
+      assert.equal(s.phase, 'result');
+      if (i < 9) s = nextItem(showVerdict(s));
+    }
+    assert.deepEqual([s.collections[0].length, s.collections[1].length], [5, 5]);
+    assert.equal(s.log.length, 10);
+  }
+});
+
+test('a full shelf hands the rest to the other player for free without an auction', () => {
+  let s = fresh();
+  for (let i = 0; i < MAX_ITEMS; i++) { s = play(s, s.opener === 0 ? [1, 'p'] : ['p', 1]); s = nextItem(s); }
+  s = startBidding(revealItem(s));
+  assert.equal(s.phase, 'result');
+  assert.deepEqual(s.result, { type: 'win', w: 1, price: 0, free: true });
+  assert.equal(quip(s, NAMES), `Lafy's shelf is full. ${ITEMS[5]} goes to Dhari free.`);
 });
 
 test('opener passes, other bids: nobody is left to raise, so it sells on the spot', () => {
@@ -97,11 +127,7 @@ test('5-item cap: a full player cannot bid', () => {
   let s = fresh();
   for (let i = 0; i < MAX_ITEMS; i++) { s = play(s, s.opener === 0 ? [1, 'p'] : ['p', 1]); s = nextItem(s); }
   assert.equal(s.collections[0].length, MAX_ITEMS);
-  s = open(s);
-  assert.equal(s.turn, 1, 'opener alternates');
-  s = pass(s, 1);
-  assert.equal(canBid(s, 0), false);
-  assert.equal(placeBid(s, 0, 1), s);
+  assert.equal(canBid(open(s), 0), false);
 });
 
 test('opener alternates every item and budgets carry', () => {
@@ -124,28 +150,28 @@ test('a full round produces awards, session stats and match score', () => {
     [1, 'p'],            // P1 opens: Chicken Wings $1
     [1, 2, 'p'],         // P0 Sushi $2
     ['p', 1, 'p'],       // P1 Spaghetti $1
-    ['p', 'p'],          // unclaimed Fried Chicken
+    ['p', 'p'],          // nobody bids on Fried Chicken
     [2, 3, 'p'],         // P1 opens 2, P0 3 → P0 Steak $3
-    [1, 'p'],            // P0 opens Ramen $1
-    [1, 'p'],            // P1 opens Escargot $1
+    [1, 'p'],            // Ramen: P0's shelf is full, so no auction
+    [1, 'p'],            // Escargot: same
   ];
   script.forEach((m, i) => { s = play(s, m); if (i < 9) s = nextItem(s); });
-  // Openers alternate: P0 opens odd items. P0 wins Pizza 3, Cheeseburger 4, Spaghetti 1, Steak 3, Ramen 1;
-  // P1 wins Tacos 6 (after a 6-bid war), Wings 1, Sushi 2, Escargot 1; Fried Chicken is unclaimed.
-  assert.deepEqual(s.budgets, [8, 10]);
-  assert.equal(s.collections[0].length, 5);
-  assert.equal(s.collections[1].length, 4);
+  // Openers alternate. P0 wins Pizza 3, Cheeseburger 4, Spaghetti 1, Steak 3 and gets Fried Chicken free (nobody bid,
+  // tied 3-3, P0 opened). That fills P0's shelf, so Ramen and Escargot go to P1 free; P1 also won Tacos 6, Wings 1, Sushi 2.
+  assert.deepEqual(s.budgets, [9, 11]);
+  assert.deepEqual([s.collections[0].length, s.collections[1].length], [5, 5]);
   const awards = awardsList(s);
   assert.deepEqual(awards.map((a) => a.title), ['BIG SPENDER', 'BARGAIN KING', 'THE SAVER', 'AUCTION THIEF', 'WAR MACHINE']);
   assert.deepEqual(awards[0], { title: 'BIG SPENDER', w: 1, desc: '$6 on Tacos' });
+  assert.deepEqual(awards[1], { title: 'BARGAIN KING', w: 0, desc: 'Spaghetti for $1' });
   assert.deepEqual(awards[4], { title: 'WAR MACHINE', w: 1, desc: 'Outlasted 6 bids for Tacos' });
   const { score, session } = chooseWinner(s, [0, 0], newSession(), 1);
   assert.deepEqual(score, [0, 1]);
-  assert.deepEqual(session.items, [5, 4]);
-  assert.deepEqual(session.spent, [12, 10]);
+  assert.deepEqual(session.items, [5, 5]);
+  assert.deepEqual(session.spent, [11, 9]);
   assert.deepEqual(session.biggest, [4, 6]);
-  assert.deepEqual(session.cheapest, [1, 1]);
-  assert.equal(quip(s, NAMES), "Escargot for $1. Lafy didn't even flinch.");
+  assert.deepEqual(session.cheapest, [1, 1], 'free hand-offs do not count as the cheapest buy');
+  assert.equal(quip(s, NAMES), "Lafy's shelf is full. Escargot goes to Dhari free.");
 });
 
 test('BROKE EARLY fires for the first player to hit $0', () => {
