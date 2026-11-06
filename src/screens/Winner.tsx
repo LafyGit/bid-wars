@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useWindowDimensions, View } from 'react-native';
+import * as StoreReview from 'expo-store-review';
 import { topicLabel } from '../content/topics';
 import { useGame } from '../store/GameContext';
 import { colors, playerColor } from '../theme/tokens';
@@ -15,6 +16,17 @@ export function Winner() {
   const color = playerColor(w);
   const name = g.names[w];
   const se = g.state.session;
+  const review = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // Apple's rating sheet after a session's second round, once the win has landed. iOS limits how often it shows.
+  useEffect(() => {
+    if (g.state.lastRound !== 2) return;
+    review.current = setTimeout(() => {
+      StoreReview.isAvailableAsync().then((ok) => { if (ok) return StoreReview.requestReview(); }).catch(() => {});
+    }, 1000);
+    return () => clearTimeout(review.current);
+  }, []);
+  // The button may open an interstitial with this screen still mounted, so the sheet must not fire behind it.
+  const next = () => { clearTimeout(review.current); g.finishRound(); };
   const stats: { label: string; a: string | number; b: string | number }[] = [
     { label: 'ITEMS WON', a: se.items[0], b: se.items[1] },
     { label: 'SPENT', a: `$${se.spent[0]}`, b: `$${se.spent[1]}` },
@@ -55,7 +67,7 @@ export function Winner() {
         </View>
       </Enter>
       <Enter kind="in" delay={460} duration={400} style={{ marginTop: 14 }}>
-        <CTA label="SEE ROUND AWARDS" size={18} onPress={g.finishRound} />
+        <CTA label="SEE ROUND AWARDS" size={18} onPress={next} />
       </Enter>
     </Screen>
   );
