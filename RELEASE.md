@@ -1,4 +1,4 @@
-# Releasing Bid Wars to TestFlight / the App Store
+# Releasing Outbid (formerly Bid Wars) to TestFlight / the App Store
 
 Identifiers
 - Bundle ID `com.lafyalmutlaq.bidwars`, team `CN8378NUAA` (both set in `app.json`).
@@ -21,8 +21,8 @@ Steps (mirrors the Footies flow; Xcode account must be signed in):
 npm test && npm run typecheck
 LANG=en_US.UTF-8 npx expo prebuild --platform ios --clean   # regenerates ios/ (gitignored)
 xattr -cr ios
-A=~/Library/Developer/Xcode/Archives/$(date +%F)/BidWars-1.0-N.xcarchive
-xcodebuild -jobs 4 -workspace ios/BidWars.xcworkspace -scheme BidWars -configuration Release \
+A=~/Library/Developer/Xcode/Archives/$(date +%F)/Outbid-1.0-N.xcarchive
+xcodebuild -jobs 4 -workspace ios/Outbid.xcworkspace -scheme Outbid -configuration Release \
   -destination 'generic/platform=iOS' -archivePath "$A" -allowProvisioningUpdates archive
 xcodebuild -jobs 4 -exportArchive -archivePath "$A" -exportOptionsPlist ExportOptions.plist \
   -exportPath build/export -allowProvisioningUpdates      # uploads to App Store Connect
@@ -47,3 +47,5 @@ Lafy's phone runs the iOS 27 beta, which traps at launch unless the app adopts U
 Live updates (from 1.0.1 on): JS-only changes ship with `npx eas-cli update --channel production --message "..."` (EAS project @lafyexpo/bid-wars). Runtime version = app version, so an update only reaches builds with the same `expo.version`; bump the version and ship a new binary for native changes.
 
 `react-native-purchases` is pinned to 10.16.0 on purpose: RevenueCat stopped publishing `PurchasesHybridCommon` to CocoaPods after 19.17.0, so 11.x fails `pod install` here. Its SwiftPM route needs React Native 0.88+.
+
+Renamed to Outbid on 2026-11-07. Player-facing text, the prebuild workspace and scheme changed. Kept on purpose: bundle and product ids (`com.lafyalmutlaq.bidwars`), storage keys (`bidwars.*`, players' saved data), the EAS slug and the repo. The next upload is 1.0.2 (20), the first with the new name. Still to change by hand in App Store Connect: app name, Pro's display name and any store art showing the old name.

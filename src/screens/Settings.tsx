@@ -34,7 +34,7 @@ export function Settings() {
         <ToggleRow label="Sound" sub="Reveal, bid, going-once and win cues" value={s.sound} onChange={(v) => g.setSetting('sound', v)} />
         <ToggleRow label="Haptics" sub="Subtle taps on bids, passes and wins" value={s.haptics} onChange={(v) => g.setSetting('haptics', v)} />
         <ToggleRow label="Reduced motion" sub="Skips flips, bursts and the topic spin" value={s.reducedMotion} onChange={(v) => g.setSetting('reducedMotion', v)} />
-        <RowBtn label="Bid Wars Pro" right={ownsPro(g.state.owned) ? 'Unlocked ✓' : 'No ads, bonus packs →'} onPress={() => g.openPaywall()} />
+        <RowBtn label="Outbid Pro" right={ownsPro(g.state.owned) ? 'Unlocked ✓' : 'No ads, bonus packs →'} onPress={() => g.openPaywall()} />
         <RowBtn label="Restore purchases" right="Already bought? →" onPress={() => { g.restorePurchases(); g.openPaywall(); }} />
         {privacyOptionsRequired() && <RowBtn label="Privacy choices" right="Ad consent →" onPress={openPrivacyOptions} />}
         <RowBtn label="Change player names" right={`${n1} & ${n2} →`} onPress={g.openSetup} />
@@ -47,8 +47,8 @@ export function Settings() {
         />
         <View style={{ paddingHorizontal: 16, paddingVertical: 14, borderRadius: 18, backgroundColor: colors.surface }}>
           <Body size={16} weight={700} color={colors.ink}>About</Body>
-          <Body size={13} color={colors.ink3} lh={1.5} style={{ marginTop: 4 }}>Bid Wars. A two-player open auction party game. All money is fake. All regret is real.</Body>
-          <Body size={11} color={colors.ink5} lh={1.5} style={{ marginTop: 8 }}>Bid Wars is an independent game. Game, brand, team and personal names in topic packs belong to their owners and appear only as plain-text names. Bid Wars is not affiliated with or endorsed by any of them.</Body>
+          <Body size={13} color={colors.ink3} lh={1.5} style={{ marginTop: 4 }}>Outbid. A two-player open auction party game. All money is fake. All regret is real.</Body>
+          <Body size={11} color={colors.ink5} lh={1.5} style={{ marginTop: 8 }}>Outbid is an independent game. Game, brand, team and personal names in topic packs belong to their owners and appear only as plain-text names. Bid Wars is not affiliated with or endorsed by any of them.</Body>
         </View>
       </ScrollView>
     </Screen>

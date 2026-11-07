@@ -1,5 +1,5 @@
 /**
- * Bid Wars content catalog: big categories, each with several subtopics.
+ * Outbid content catalog: big categories, each with several subtopics.
  * A round draws 10 items from one subtopic. Items are never shown before they are up for auction.
  * Each subtopic needs at least 10 items; most carry 14–20 so rounds differ.
  * Items are ranked best-first: the judge scores an item by its position in its list.

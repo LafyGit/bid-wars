@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Bid Wars",
+    "name": "Outbid",
     "slug": "bid-wars",
     "version": "1.0.2",
     "orientation": "portrait",
@@ -20,7 +20,7 @@
         "UIViewControllerBasedStatusBarAppearance": false
       },
       "appleTeamId": "CN8378NUAA",
-      "buildNumber": "19",
+      "buildNumber": "20",
       "config": {
         "usesNonExemptEncryption": false
       }
@@ -63,7 +63,7 @@
           "iosAppId": "ca-app-pub-2044567614750879~2583837206",
           "androidAppId": "ca-app-pub-3940256099942544~3347511713",
           "delayAppMeasurementInit": true,
-          "userTrackingUsageDescription": "Bid Wars uses this to show ads that are more relevant to you. Saying no still lets you play everything.",
+          "userTrackingUsageDescription": "Outbid uses this to show ads that are more relevant to you. Saying no still lets you play everything.",
           "skAdNetworkItems": [
             "cstr6suwn9.skadnetwork",
             "4fzdc2evr5.skadnetwork",
@@ -115,7 +115,7 @@
       [
         "expo-tracking-transparency",
         {
-          "userTrackingPermission": "Bid Wars uses this to show ads that are more relevant to you. Saying no still lets you play everything."
+          "userTrackingPermission": "Outbid uses this to show ads that are more relevant to you. Saying no still lets you play everything."
         }
       ],
       "expo-updates"

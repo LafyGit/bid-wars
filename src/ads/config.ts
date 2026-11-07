@@ -6,7 +6,7 @@
  * iosAppId / androidAppId) with the real AdMob app IDs before shipping ads.
  */
 export const AD_UNITS = {
-  // AdMob app: ca-app-pub-2044567614750879~2583837206 (Bid Wars: Blind Auction, iOS)
+  // AdMob app: ca-app-pub-2044567614750879~2583837206 (Outbid: Blind Auction, iOS)
   ios: { interstitial: 'ca-app-pub-2044567614750879/1581001869', rewarded: 'ca-app-pub-2044567614750879/1270755531' },
   android: { interstitial: '', rewarded: '' },
 };

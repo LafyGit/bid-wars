@@ -24,7 +24,7 @@ function Perk({ title, body, delay }: { title: string; body: string; delay: numb
   );
 }
 
-/** Bid Wars Pro: one purchase, no ads, the bonus packs. Every core pack stays free. */
+/** Outbid Pro: one purchase, no ads, the bonus packs. Every core pack stays free. */
 export function Paywall() {
   const g = useGame();
   const p = useScreenInsets();
@@ -45,7 +45,7 @@ export function Paywall() {
       <View style={{ paddingHorizontal: layout.padX }}>
         <TextLink label="← BACK" onPress={() => g.go(paywallBack === 'paywall' ? 'topics' : paywallBack)} />
         <Mono color={PRO} style={{ marginTop: 12 }}>ONE-TIME PURCHASE</Mono>
-        <Display size={40} lh={1} style={{ marginTop: 6 }}>{'BID WARS\nPRO'}</Display>
+        <Display size={40} lh={1} style={{ marginTop: 6 }}>{'OUTBID\nPRO'}</Display>
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: layout.padX, paddingTop: 18, paddingBottom: p.bottom + 12, gap: 10 }} showsVerticalScrollIndicator={false}>
         <Perk title="No ads, ever" body="No breaks between rounds. Just the next auction." delay={40} />

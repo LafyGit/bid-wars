@@ -23,7 +23,7 @@ export type JudgeInput = {
 
 export type Verdict = { winner: Player; headline: string; reasoning: string; roast: string };
 
-const SYSTEM = `You are the judge of Bid Wars, a two-player party game played on one phone. Two friends bid fake money on hidden items from one topic and each ended up with five. Now both collections are on the table and they are arguing about who has the better one.
+const SYSTEM = `You are the judge of Outbid, a two-player party game played on one phone. Two friends bid fake money on hidden items from one topic and each ended up with five. Now both collections are on the table and they are arguing about who has the better one.
 
 Decide who has the better collection purely on how good the items are in the real world: online reviews and ratings, critic and fan consensus, popularity, prestige and how iconic each one is within the topic. Weigh each player's best pick most, then the overall quality of all five. Money is irrelevant: you are not told what anyone paid or has left, and it must not matter.
 

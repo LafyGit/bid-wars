@@ -1,4 +1,4 @@
-// Design tokens from the Bid Wars handoff. Values are final; do not tune by eye.
+// Design tokens from the Outbid handoff. Values are final; do not tune by eye.
 
 export const colors = {
   bg: '#0E0F12',
