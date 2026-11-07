@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { ALL_PRODUCT_IDS } from './entitlements';
+import { reportPurchase, startRevenueCat } from './revenuecat';
 
 /**
  * Thin wrapper over StoreKit (expo-iap). Everything is non-consumable, so ownership is simply the set of
@@ -37,6 +38,7 @@ async function refreshOwned() {
 /** Connect to the store, load prices and ownership. Safe to call more than once. */
 export async function startStore(h: StoreHandlers): Promise<void> {
   handlers = h;
+  startRevenueCat();
   iap = loadIAP();
   if (!iap) {
     if (__DEV__) {
@@ -60,6 +62,7 @@ export async function startStore(h: StoreHandlers): Promise<void> {
       try {
         await iap!.finishTransaction({ purchase, isConsumable: false });
       } catch { /* the transaction replays on next launch */ }
+      reportPurchase(id);
       handlers?.onOwned([id]);
       handlers?.onMessage(null);
     }),
