@@ -39,7 +39,7 @@ export function Home() {
           <TiltCard color={colors.p2} glyph="$" from={12} to={9} period={5600} offset={{ x: 24, y: -150 }} />
         </View>
         <Enter kind="in" duration={420} style={{ marginTop: 150, alignItems: 'center' }}>
-          <Display size={76} ls={-0.045} lh={0.86} align="center">{'BID\nWARS'}</Display>
+          <Display size={76} ls={-0.045} lh={0.86} align="center">{'OUT\nBID'}</Display>
           <Body size={17} align="center" style={{ marginTop: 16 }}>Spend smart. You don’t know what’s next.</Body>
           {hasScore && (
             <View style={{ marginTop: 18, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, backgroundColor: colors.surfaceHover }}>
