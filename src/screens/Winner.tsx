@@ -1,10 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { useWindowDimensions, View } from 'react-native';
+import { Share, useWindowDimensions, View } from 'react-native';
 import * as StoreReview from 'expo-store-review';
 import { topicLabel } from '../content/topics';
+import { resultMessage } from '../game/share';
 import { useGame } from '../store/GameContext';
 import { colors, playerColor } from '../theme/tokens';
-import { CTA } from '../ui/Btn';
+import { CTA, TextLink } from '../ui/Btn';
 import { Burst, Enter, Flash } from '../ui/Motion';
 import { Row, Screen } from '../ui/Screen';
 import { Body, Display, Mono, nameSize, FitText } from '../ui/Txt';
@@ -27,6 +28,11 @@ export function Winner() {
   }, []);
   // The button may open an interstitial with this screen still mounted, so the sheet must not fire behind it.
   const next = () => { clearTimeout(review.current); g.finishRound(); };
+  // Same rule for the share sheet.
+  const share = () => {
+    clearTimeout(review.current);
+    Share.share({ message: resultMessage(name, g.topic.title, g.state.score) }).catch(() => {});
+  };
   const stats: { label: string; a: string | number; b: string | number }[] = [
     { label: 'ITEMS WON', a: se.items[0], b: se.items[1] },
     { label: 'SPENT', a: `$${se.spent[0]}`, b: `$${se.spent[1]}` },
@@ -68,6 +74,7 @@ export function Winner() {
       </Enter>
       <Enter kind="in" delay={460} duration={400} style={{ marginTop: 14 }}>
         <CTA label="SEE ROUND AWARDS" size={18} onPress={next} />
+        <TextLink label="SHARE THE RESULT" align="center" onPress={share} style={{ marginTop: 4 }} />
       </Enter>
     </Screen>
   );
