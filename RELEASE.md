@@ -49,3 +49,5 @@ Live updates (from 1.0.1 on): JS-only changes ship with `npx eas-cli update --ch
 `react-native-purchases` is pinned to 10.16.0 on purpose: RevenueCat stopped publishing `PurchasesHybridCommon` to CocoaPods after 19.17.0, so 11.x fails `pod install` here. Its SwiftPM route needs React Native 0.88+.
 
 Renamed to Outbid on 2026-11-07. Player-facing text, the prebuild workspace and scheme changed. Kept on purpose: bundle and product ids (`com.lafyalmutlaq.bidwars`), storage keys (`bidwars.*`, players' saved data), the EAS slug and the repo. 1.0.2 (20), uploaded 2026-11-07, still shows the old title on the home screen, so don't submit it. 1.0.2 (21) is the first fully renamed build; the next upload must be 22. Still to change by hand in App Store Connect: app name, Pro's display name and any store art showing the old name.
+
+- 1.0.2 (21): rejected 2026-11-09 under 2.3.6 (automated check: the app shows ads but the age rating said "Advertising: No"). Fixed in App Store Connect only (App Information › Age Ratings › Step 1 › Advertising: Yes; still 4+) and resubmitted the same build with Outbid Pro the same day. No new binary needed.
