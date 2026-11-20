@@ -5,13 +5,12 @@
 export type DecideCopy = { question: string; cta: string; verb: string };
 
 const COPY: Record<string, DecideCopy> = {
-  screen: { question: 'Can’t decide what to watch?', cta: 'Pick something for tonight', verb: 'Watch' },
-  hollywood: { question: 'Movie night, no idea what?', cta: 'Pick a movie night', verb: 'Watch' },
+  tv: { question: 'Can’t decide what to watch?', cta: 'Pick something for tonight', verb: 'Watch' },
+  movies: { question: 'Movie night, no idea what?', cta: 'Pick a movie night', verb: 'Watch' },
   cartoons: { question: 'Want something easy to watch?', cta: 'Pick a cartoon', verb: 'Watch' },
   anime: { question: 'Can’t pick your next anime?', cta: 'Pick something to watch', verb: 'Watch' },
   fantasy: { question: 'Which world are you escaping to?', cta: 'Pick a world', verb: 'Dive into' },
   music: { question: 'No idea what to listen to?', cta: 'Pick something to play', verb: 'Listen to' },
-  books: { question: 'What should you read next?', cta: 'Pick a read', verb: 'Read' },
   food: { question: 'Can’t decide what to eat?', cta: 'Pick a meal', verb: 'Eat' },
   sweets: { question: 'Craving something sweet?', cta: 'Pick a treat', verb: 'Have' },
   travel: { question: 'Where should you go next?', cta: 'Pick a destination', verb: 'Go to' },
@@ -20,7 +19,6 @@ const COPY: Record<string, DecideCopy> = {
   gametypes: { question: 'What should you play tonight?', cta: 'Pick a game', verb: 'Play' },
   nintendo: { question: 'What should you play tonight?', cta: 'Pick a game', verb: 'Play' },
   fps: { question: 'Which shooter tonight?', cta: 'Pick a game', verb: 'Play' },
-  fitness: { question: 'No idea how to train today?', cta: 'Pick a workout', verb: 'Try' },
   life: { question: 'Stuck on a decision?', cta: 'Let the app pick', verb: 'Go with' },
 };
 

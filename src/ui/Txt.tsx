@@ -44,7 +44,11 @@ type Base = TextProps & {
  */
 const MIN_DISPLAY_LH = 0.98;
 
-export function Display({ size = 40, color = colors.ink, ls = -0.03, lh = 0.92, align, upper = true, tabular, wdth = 125, weight = 900, style, ...rest }: Base & { wdth?: Wdth; weight?: Weight }) {
+/** Hyphenated names ("Spider-Man", "Counter-Strike") never break across lines: Archivo has U+2011, Plex Mono does not. */
+const keepHyphens = (children: React.ReactNode) =>
+  React.Children.map(children, (c) => (typeof c === 'string' ? c.replace(/-/g, '\u2011') : c));
+
+export function Display({ size = 40, color = colors.ink, ls = -0.03, lh = 0.92, align, upper = true, tabular, wdth = 125, weight = 900, style, children, ...rest }: Base & { wdth?: Wdth; weight?: Weight }) {
   return (
     <Text
       {...rest}
@@ -68,7 +72,7 @@ export function Display({ size = 40, color = colors.ink, ls = -0.03, lh = 0.92, 
         },
         style,
       ]}
-    />
+    >{keepHyphens(children)}</Text>
   );
 }
 
@@ -98,7 +102,7 @@ export function Mono({ size = 11, color = colors.ink3, ls = 0.14, lh = 1.3, alig
 }
 
 /** Archivo body copy, wdth 100, weight 500–800. */
-export function Body({ size = 15, color = colors.ink2, ls = 0, lh = 1.4, align, upper = false, weight = 500, tabular, style, ...rest }: Base & { weight?: Weight }) {
+export function Body({ size = 15, color = colors.ink2, ls = 0, lh = 1.4, align, upper = false, weight = 500, tabular, style, children, ...rest }: Base & { weight?: Weight }) {
   return (
     <Text
       {...rest}
@@ -119,7 +123,7 @@ export function Body({ size = 15, color = colors.ink2, ls = 0, lh = 1.4, align, 
         },
         style,
       ]}
-    />
+    >{keepHyphens(children)}</Text>
   );
 }
 

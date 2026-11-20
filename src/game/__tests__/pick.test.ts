@@ -52,5 +52,5 @@ test('suggest picks from the pool, avoids repeats, and falls back when everythin
   assert.equal(new Set(seen).size, 3);
   assert.ok(suggest(pool, seen), 'never returns nothing while the pool has items');
   assert.equal(suggest([], []), null);
-  assert.ok(decideCopy('food') && decideCopy('travel') && decideCopy('screen') && decideCopy('nope') === null);
+  assert.ok(decideCopy('food') && decideCopy('travel') && decideCopy('tv') && decideCopy('nope') === null);
 });

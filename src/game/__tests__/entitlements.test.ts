@@ -1,7 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { categoryUnlocked, groupProductId, PRO_ID, ownsGroup, ALL_PRODUCT_IDS } from '../../store/entitlements.ts';
-import { CATALOG, GROUPS } from '../../content/catalog.ts';
+import { categoryUnlocked, groupProductId, PRO_ID, ALL_PRODUCT_IDS, LEGACY_GROUP_PACKS, topicUnlocked } from '../../store/entitlements.ts';
+import { CATALOG } from '../../content/catalog.ts';
+
+const packs = CATALOG.flatMap((c) => c.subtopics.map((s) => ({ id: s.id, categoryId: c.id, free: c.free })));
 
 test('free categories are always open, paid ones are locked by default', () => {
   const free = CATALOG.find((c) => c.free)!;
@@ -10,24 +12,33 @@ test('free categories are always open, paid ones are locked by default', () => {
   assert.equal(categoryUnlocked(paid.id, []), false);
 });
 
-test('a group pack unlocks only its own group', () => {
-  // Legacy group packs still unlock their own group's Pro categories; take two groups that have some.
-  const [g, other] = GROUPS.filter((gr) => CATALOG.some((c) => gr.categoryIds.includes(c.id) && !c.free));
-  const paidInG = CATALOG.find((c) => g.categoryIds.includes(c.id) && !c.free)!;
-  const paidInOther = CATALOG.find((c) => other.categoryIds.includes(c.id) && !c.free)!;
-  const owned = [groupProductId(g.id)];
-  assert.equal(categoryUnlocked(paidInG.id, owned), true);
-  assert.equal(categoryUnlocked(paidInOther.id, owned), false);
-  assert.equal(ownsGroup(owned, g.id), true);
-  assert.equal(ownsGroup(owned, other.id), false);
+test('every pack an old group pack unlocked still exists and is still a paid pack', () => {
+  for (const [g, ids] of Object.entries(LEGACY_GROUP_PACKS)) {
+    for (const id of ids) {
+      const p = packs.find((x) => x.id === id);
+      assert.ok(p, `${g} pack ${id} no longer exists`);
+      assert.equal(p.free, false, `${g} pack ${id} is free now; fine, but drop it from the legacy list`);
+      assert.equal(topicUnlocked(p, [groupProductId(g)]), true, `${g} owners lost ${id}`);
+    }
+  }
+});
+
+test('an old group pack unlocks only its own packs', () => {
+  const owned = [groupProductId('gaming')];
+  const other = packs.find((p) => LEGACY_GROUP_PACKS.entertainment.includes(p.id))!;
+  assert.equal(topicUnlocked(other, owned), false);
+  // Internet now mixes old entertainment and lifestyle packs: the tile opens, the lifestyle packs stay locked.
+  const ent = [groupProductId('entertainment')];
+  assert.equal(categoryUnlocked('internet', ent), true);
+  assert.equal(topicUnlocked({ id: 'apps-social', categoryId: 'internet' }, ent), false);
+  assert.equal(topicUnlocked({ id: 'memes', categoryId: 'internet' }, ent), true);
 });
 
 test('Pro unlocks everything', () => {
-  for (const c of CATALOG) assert.equal(categoryUnlocked(c.id, [PRO_ID]), true, c.id);
+  for (const p of packs) assert.equal(topicUnlocked(p, [PRO_ID]), true, p.id);
 });
 
-test('product ids are unique and well formed', () => {
-  assert.equal(new Set(ALL_PRODUCT_IDS).size, ALL_PRODUCT_IDS.length);
-  assert.equal(ALL_PRODUCT_IDS.length, GROUPS.length + 1);
+test('product ids never change: Pro plus the five group packs on sale in 1.0.0', () => {
+  assert.deepEqual(ALL_PRODUCT_IDS, [PRO_ID, ...['gaming', 'sports', 'entertainment', 'foodtravel', 'lifestyle'].map(groupProductId)]);
   for (const id of ALL_PRODUCT_IDS) assert.match(id, /^com\.lafyalmutlaq\.bidwars\.[a-z.]+$/);
 });

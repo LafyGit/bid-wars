@@ -16,7 +16,9 @@ export function Subtopics() {
   const g = useGame();
   const p = useScreenInsets();
   const c = categoryById(g.state.categoryId);
-  const surprise = () => g.chooseTopic(pickTopicId(c.topics.map((t) => t.id), g.state.recentTopics));
+  // An old group pack can cover only part of a merged category, so Surprise draws from playable packs.
+  const playable = c.topics.filter(g.isUnlocked);
+  const surprise = () => g.chooseTopic(pickTopicId((playable.length ? playable : c.topics).map((t) => t.id), g.state.recentTopics));
   const copy = decideCopy(c.id);
   const [deciding, setDeciding] = useState(false);
   return (
@@ -52,7 +54,7 @@ export function Subtopics() {
                 <FitText text={t.title} size={18} minSize={12} maxLines={2} wdth={112} upper={false} ls={0} lh={1.1} />
                 <Body size={13} color={colors.ink3} style={{ marginTop: 2 }}>{t.subtitle}</Body>
               </View>
-              <Mono size={10} ls={0.1} lh={1.5} align="right">PLAY →</Mono>
+              <Mono size={10} ls={0.1} lh={1.5} align="right" color={g.isUnlocked(t) ? undefined : colors.p1}>{g.isUnlocked(t) ? 'PLAY →' : 'PRO'}</Mono>
             </Pressable>
           </Enter>
         ))}

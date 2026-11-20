@@ -37,7 +37,9 @@ function Column({ p }: { p: Player }) {
   const coll = r.collections[p];
   return (
     <View style={{ flex: 1 }}>
-      <Mono color={playerColor(p)} ls={0.12} numberOfLines={1} style={{ paddingBottom: 8, borderBottomWidth: 2, borderBottomColor: playerColor(p) }}>{g.names[p]} · ${budget} LEFT</Mono>
+      <View style={{ paddingBottom: 8, borderBottomWidth: 2, borderBottomColor: playerColor(p) }}>
+        <FitText kind="mono" text={`${g.names[p]} · $${budget} LEFT`} size={11} minSize={8} color={playerColor(p)} ls={0.12} />
+      </View>
       {coll.map((c, i) => (
         <Row key={`${c.name}-${i}`} justify="space-between" gap={6} style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line07 }}>
           <View style={{ flex: 1 }}><FitText kind="body" text={c.name} size={15} minSize={10} maxLines={2} weight={600} color={colors.ink} /></View>

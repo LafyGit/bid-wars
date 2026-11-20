@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 import { colors, radii } from '../theme/tokens';
-import { Display, Mono } from './Txt';
+import { Display, FitText, Mono } from './Txt';
 
 type Common = Omit<PressableProps, 'style' | 'children'> & { style?: StyleProp<ViewStyle>; label: string };
 
@@ -16,7 +16,7 @@ export function CTA({ label, bg = colors.ink, color = colors.bg, height = 64, si
         style,
       ]}
     >
-      <Display size={size} color={color} ls={0.01} lh={1.1} numberOfLines={1}>{label}</Display>
+      <FitText text={label} size={size} minSize={Math.round(size * 0.55)} color={color} ls={0.01} lh={1.1} align="center" />
     </Pressable>
   );
 }
@@ -32,7 +32,7 @@ export function Outline({ label, height = 56, size = 14, style, ...rest }: Commo
         style,
       ]}
     >
-      <Display size={size} weight={800} ls={0} lh={1.1} numberOfLines={1} adjustsFontSizeToFit>{label}</Display>
+      <FitText text={label} size={size} minSize={9} weight={800} ls={0} lh={1.1} align="center" />
     </Pressable>
   );
 }

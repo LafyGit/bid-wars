@@ -54,7 +54,7 @@ export function Paywall() {
         <Enter kind="in" delay={200} duration={340} style={{ marginTop: 6 }}>
           {pro
             ? <View style={{ height: 64, borderRadius: 20, backgroundColor: withAlpha(PRO, 0.14), borderWidth: 2, borderColor: PRO, alignItems: 'center', justifyContent: 'center' }}><Display size={18} color={PRO} ls={0.02} lh={1.1}>PRO UNLOCKED</Display></View>
-            : <CTA label={available ? `GET PRO · ${price}` : 'GET PRO'} bg={PRO} height={64} size={19} disabled={!available} style={{ opacity: available ? 1 : 0.5 }} onPress={() => g.buyProduct(PRO_ID)} accessibilityLabel={available ? `Get Bid Wars Pro for ${price}` : 'Bid Wars Pro, unavailable right now'} />}
+            : <CTA label={available ? `GET PRO · ${price}` : 'GET PRO'} bg={PRO} height={64} size={19} disabled={!available} style={{ opacity: available ? 1 : 0.5 }} onPress={() => g.buyProduct(PRO_ID)} accessibilityLabel={available ? `Get Outbid Pro for ${price}` : 'Outbid Pro, unavailable right now'} />}
         </Enter>
         <Body size={12} color={colors.ink4} align="center">Every other pack is free to play.</Body>
         {!pro && trial && adReady && (
@@ -69,7 +69,7 @@ export function Paywall() {
         <Pressable accessibilityRole="button" onPress={g.restorePurchases} style={({ pressed }) => ({ alignSelf: 'center', paddingVertical: 12, paddingHorizontal: 18, borderRadius: 14, borderWidth: 1, borderColor: colors.line14, opacity: pressed ? 0.7 : 1 })}>
           <Mono color={colors.ink2}>RESTORE PURCHASES</Mono>
         </Pressable>
-        <Body size={11} color={colors.ink5} align="center" lh={1.5}>Payment is charged to your Apple account at confirmation. One-time, no subscription, restorable at any time. Packs bought earlier keep working and stay ad-free.</Body>
+        <Body size={11} color={colors.ink5} align="center" lh={1.5}>Payment is charged to your Apple account at confirmation. Pay once, no subscription, restorable at any time. Packs bought earlier keep working and remove ads.</Body>
       </ScrollView>
     </Screen>
   );
