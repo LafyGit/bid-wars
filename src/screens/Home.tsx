@@ -6,6 +6,7 @@ import { colors, radii } from '../theme/tokens';
 import { CTA, Chip, Outline } from '../ui/Btn';
 import { Enter } from '../ui/Motion';
 import { Row, Screen } from '../ui/Screen';
+import { Wordmark } from '../ui/Wordmark';
 import { Body, Display, Mono } from '../ui/Txt';
 
 function TiltCard({ color, glyph, from, to, period, offset }: { color: string; glyph: string; from: number; to: number; period: number; offset: { x: number; y: number } }) {
@@ -38,8 +39,8 @@ export function Home() {
           <TiltCard color={colors.p1} glyph="?" from={-14} to={-11} period={5000} offset={{ x: -170, y: -190 }} />
           <TiltCard color={colors.p2} glyph="$" from={12} to={9} period={5600} offset={{ x: 24, y: -150 }} />
         </View>
-        <Enter kind="in" duration={420} style={{ marginTop: 150, alignItems: 'center' }}>
-          <Display size={76} ls={-0.045} lh={0.86} align="center">{'OUT\nBID'}</Display>
+        <Enter kind="in" duration={420} style={{ marginTop: 190, alignItems: 'center' }}>
+          <Wordmark size={64} />
           <Body size={17} align="center" style={{ marginTop: 16 }}>Spend smart. You don’t know what’s next.</Body>
           {hasScore && (
             <View style={{ marginTop: 18, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, backgroundColor: colors.surfaceHover }}>
