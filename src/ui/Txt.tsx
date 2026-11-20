@@ -177,6 +177,7 @@ function FitInner({ kind = 'display', text, size, minSize = 11, maxLines = 1, ma
   const [s, setS] = React.useState(size);
   const [ok, setOk] = React.useState(false);
   const base = React.useRef(size);
+  const lastH = React.useRef<number | null>(null);
   const lhMul = rest.lh ?? (kind === 'display' ? 1 : kind === 'mono' ? 1.3 : 1.4);
 
   // Step 1: width fit, from the widest piece measured at the base size.
@@ -184,7 +185,11 @@ function FitInner({ kind = 'display', text, size, minSize = 11, maxLines = 1, ma
     if (!w || measured < parts.length) return;
     const widest = Math.max(...widths.current.slice(0, parts.length), 1);
     const fit = Math.floor(base.current * (w / widest) * 0.98);
-    setS(Math.max(minSize, Math.min(size, fit)));
+    const next = Math.max(minSize, Math.min(size, fit));
+    // Text that already fits keeps its size, so its box never lays out again: check the height it already reported,
+    // or it would stay hidden until the 500 ms fallback.
+    if (next === s && lastH.current != null) onTextBox(lastH.current);
+    else setS(next);
   }, [w, measured, parts.length, size, minSize]);
 
   React.useEffect(() => {
@@ -208,7 +213,7 @@ function FitInner({ kind = 'display', text, size, minSize = 11, maxLines = 1, ma
           <Comp key={i} {...rest} size={base.current} style={undefined} onLayout={(e: any) => { widths.current[i] = e.nativeEvent.layout.width; setMeasured((m) => Math.max(m, widths.current.filter((x) => x != null).length)); }}>{part}</Comp>
         ))}
       </View>
-      <Comp {...rest} size={s} numberOfLines={s <= minSize ? maxLines : undefined} onLayout={(e: any) => onTextBox(e.nativeEvent.layout.height)} style={[rest.style as any, { opacity: ok ? 1 : 0 }]}>{text}</Comp>
+      <Comp {...rest} size={s} numberOfLines={s <= minSize ? maxLines : undefined} onLayout={(e: any) => { lastH.current = e.nativeEvent.layout.height; onTextBox(e.nativeEvent.layout.height); }} style={[rest.style as any, { opacity: ok ? 1 : 0 }]}>{text}</Comp>
     </View>
   );
 }
