@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
+import { CUSTOM_ACCENT } from '../content/custom';
 import { GROUPS, type Category } from '../content/topics';
 import { categoryUnlocked } from '../store/entitlements';
 import { useGame } from '../store/GameContext';
@@ -37,6 +38,7 @@ function CategoryTile({ c, delay }: { c: Category; delay: number }) {
 export function Topics() {
   const g = useGame();
   const p = useScreenInsets();
+  const packs = g.state.custom.length;
   let n = 0;
   return (
     <Screen padX={false} padBottom={false}>
@@ -55,6 +57,21 @@ export function Topics() {
             <Display size={180} color="rgba(14,15,18,0.08)" lh={1} ls={0} style={{ position: 'absolute', right: -10, top: -28 }}>?</Display>
             <Display size={36} color={colors.bg} lh={1}>RANDOM</Display>
             <Body size={14} color={colors.ink6} style={{ marginTop: 4 }}>Let the phone pick. No arguing.</Body>
+          </Pressable>
+        </Enter>
+        <Enter kind="in" delay={40} duration={360}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Your packs. ${packs ? `${packs} saved` : 'Make your own'}`}
+            onPress={() => g.go('packs')}
+            style={({ pressed }) => ({ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 20, borderWidth: 1, borderColor: withAlpha(CUSTOM_ACCENT, 0.5), backgroundColor: pressed ? colors.surfaceHover : colors.surface, transform: [{ scale: pressed ? 0.98 : 1 }] })}
+          >
+            <View style={{ width: 22, height: 6, borderRadius: 3, backgroundColor: CUSTOM_ACCENT }} />
+            <View style={{ flex: 1 }}>
+              <Display size={17} wdth={112} upper={false} ls={0} lh={1.15}>Your Packs</Display>
+              <Body size={12} color={colors.ink4} lh={1.3}>{packs ? `${packs} saved · make, play, edit` : 'Make your own: friends, jokes, your city'}</Body>
+            </View>
+            <Mono size={10} ls={0.1} color={CUSTOM_ACCENT}>OPEN →</Mono>
           </Pressable>
         </Enter>
         {GROUPS.map((gr) => (

@@ -34,7 +34,7 @@ function Row({ i, y, title, size, color }: { i: number; y: SharedValue<number>; 
 }
 
 /** Slot-style reel: the strip scrolls up, slows to a stop, overshoots a touch, then settles on the target. */
-function Reel({ reel, spin, landed, accent, onLand }: { reel: number[]; spin: boolean; landed: boolean; accent: string; onLand: () => void }) {
+function Reel({ reel, spin, landed, accent, onLand }: { reel: string[]; spin: boolean; landed: boolean; accent: string; onLand: () => void }) {
   const last = reel.length - 1;
   const travel = last * ROW_H;
   const y = useSharedValue(spin ? 0 : -travel);
@@ -66,8 +66,7 @@ function Reel({ reel, spin, landed, accent, onLand }: { reel: number[]; spin: bo
   return (
     <View style={{ height: WINDOW_H, width: '100%', overflow: 'hidden' }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <Animated.View style={[{ position: 'absolute', left: 0, right: 0, top: 0, height: ROW_H * reel.length }, strip]}>
-        {reel.map((idx, i) => {
-          const title = TOPICS[idx]?.categoryTitle ?? '';
+        {reel.map((title, i) => {
           return <Row key={i} i={i} y={y} title={title} size={fontFor(title)} color={landed && i === last ? accent : colors.ink} />;
         })}
       </Animated.View>
@@ -78,10 +77,11 @@ function Reel({ reel, spin, landed, accent, onLand }: { reel: number[]; spin: bo
 export function TopicReveal() {
   const g = useGame();
   const { width } = useWindowDimensions();
-  const { idx, landed, reel } = g.state.reveal;
-  const t = TOPICS[idx] ?? TOPICS[0];
+  const { landed, reel } = g.state.reveal;
+  // The spin sets topicId to its target up front, so the current topic is right even mid-spin (and custom packs have no catalog index).
+  const t = g.topic;
   const spinning = !!reel && reel.length > 1 && !g.rm;
-  const strip = spinning ? reel! : [idx];
+  const strip = spinning ? reel!.map((i) => TOPICS[i]?.categoryTitle ?? '') : [t.categoryTitle];
   const ring = new Keyframe({ 0: { opacity: 0.9, transform: [{ scale: 0.3 }] }, 100: { opacity: 0, transform: [{ scale: 2.6 }], easing: Easing.out(Easing.ease) } }).duration(700);
   return (
     <Screen>
@@ -89,7 +89,7 @@ export function TopicReveal() {
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <Enter kind="fade"><Mono size={12} color={colors.ink2} ls={0.2}>TONIGHT’S CATEGORY</Mono></Enter>
         <View style={{ marginTop: 14, height: WINDOW_H, width: '100%', alignItems: 'center', justifyContent: 'center' }}>
-          <Reel key={strip.join(',')} reel={strip} spin={spinning && !landed} landed={landed} accent={t.accent} onLand={g.landSpin} />
+          <Reel key={spinning ? reel!.join(',') : t.id} reel={strip} spin={spinning && !landed} landed={landed} accent={t.accent} onLand={g.landSpin} />
           <Display size={1} color="transparent" accessibilityLiveRegion="polite" style={{ position: 'absolute', height: 1, width: 1 }}>{landed ? t.categoryTitle : ''}</Display>
         </View>
         {landed && !g.rm && Platform.OS !== 'web' && (

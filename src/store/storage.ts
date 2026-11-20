@@ -8,6 +8,7 @@ export const KEYS = {
   owned: 'bidwars.owned',
   seen: 'bidwars.seen',
   recent: 'bidwars.recentTopics',
+  custom: 'bidwars.customPacks',
 } as const;
 
 export async function load<T>(key: string, fallback: T): Promise<T> {

@@ -10,6 +10,8 @@ import { Final } from './screens/Final';
 import { Home } from './screens/Home';
 import { HowToPlay } from './screens/HowToPlay';
 import { MatchIntro } from './screens/MatchIntro';
+import { PackEditor } from './screens/PackEditor';
+import { Packs } from './screens/Packs';
 import { Paywall } from './screens/Paywall';
 import { Settings } from './screens/Settings';
 import { Setup } from './screens/Setup';
@@ -39,6 +41,8 @@ export function Root() {
     case 'awards': screen = <Awards />; break;
     case 'browser': screen = <Browser />; break;
     case 'settings': screen = <Settings />; break;
+    case 'packs': screen = <Packs />; break;
+    case 'packEdit': screen = <PackEditor />; break;
   }
   const animate = !rm && Platform.OS !== 'web';
   return (

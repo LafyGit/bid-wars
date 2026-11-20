@@ -50,8 +50,9 @@ export function Paywall() {
       <ScrollView contentContainerStyle={{ paddingHorizontal: layout.padX, paddingTop: 18, paddingBottom: p.bottom + 12, gap: 10 }} showsVerticalScrollIndicator={false}>
         <Perk title="No ads, ever" body="No breaks between rounds. Just the next auction." delay={40} />
         <Perk title="Bonus packs" body={bonus.join(' · ')} delay={90} />
-        <Perk title="Everything we add later" body="New Pro packs land in your app for free." delay={140} />
-        <Enter kind="in" delay={200} duration={340} style={{ marginTop: 6 }}>
+        <Perk title="Unlimited custom packs" body="One pack of your own is free. Pro makes as many as you like." delay={140} />
+        <Perk title="Everything we add later" body="New Pro packs land in your app for free." delay={190} />
+        <Enter kind="in" delay={240} duration={340} style={{ marginTop: 6 }}>
           {pro
             ? <View style={{ height: 64, borderRadius: 20, backgroundColor: withAlpha(PRO, 0.14), borderWidth: 2, borderColor: PRO, alignItems: 'center', justifyContent: 'center' }}><Display size={18} color={PRO} ls={0.02} lh={1.1}>PRO UNLOCKED</Display></View>
             : <CTA label={available ? `GET PRO · ${price}` : 'GET PRO'} bg={PRO} height={64} size={19} disabled={!available} style={{ opacity: available ? 1 : 0.5 }} onPress={() => g.buyProduct(PRO_ID)} accessibilityLabel={available ? `Get Outbid Pro for ${price}` : 'Outbid Pro, unavailable right now'} />}

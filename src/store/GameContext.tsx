@@ -1,12 +1,13 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
 import { AccessibilityInfo } from 'react-native';
 import { TOPICS, randomTopic, topicById, type Topic } from '../content/topics';
+import { accentFor, cleanItems, cleanTitle, customTopic, newPackId, packProblem, validPacks, type CustomPack } from '../content/custom';
 import * as R from '../game/round';
 import type { Pair, Player, RoundState, Session, Settings } from '../game/types';
 import { haptic, setHapticsEnabled } from '../fx/haptics';
 import { initSound, setSoundEnabled, sfx } from '../fx/sound';
 import { KEYS, load, loadRaw, save } from './storage';
-import { playableTopics, topicUnlocked } from './entitlements';
+import { canAddCustomPack, playableTopics, topicUnlocked } from './entitlements';
 import { pickItems, pickTopicId, remember } from '../game/pick';
 import * as store from './purchases';
 import { initAds, maybeShowInterstitial, setAdsAllowed, showRewarded } from '../ads/ads';
@@ -14,7 +15,7 @@ import type { ProductInfo, StoreStatus } from './purchases';
 
 export type Screen =
   | 'splash' | 'home' | 'howto' | 'setup' | 'topics' | 'subtopics' | 'reveal' | 'intro'
-  | 'auction' | 'final' | 'winner' | 'awards' | 'browser' | 'settings' | 'paywall';
+  | 'auction' | 'final' | 'winner' | 'awards' | 'browser' | 'settings' | 'paywall' | 'packs' | 'packEdit';
 
 export type AppState = {
   hydrated: boolean;
@@ -49,6 +50,10 @@ export type AppState = {
   paywallTopic: string | null;
   /** Topic unlocked for this sitting by watching a rewarded ad. */
   trialTopic: string | null;
+  /** Packs the players made, newest last. */
+  custom: CustomPack[];
+  /** Pack open in the editor; null while making a new one. */
+  editingPack: string | null;
 };
 
 const DEFAULT_SETTINGS: Settings = { sound: true, haptics: true, reducedMotion: false, threeSecondRule: false, aiJudge: true };
@@ -82,6 +87,8 @@ const initial: AppState = {
   paywallBack: 'topics',
   paywallTopic: null,
   trialTopic: null,
+  custom: [],
+  editingPack: null,
 };
 
 type Action =
@@ -107,7 +114,9 @@ type Action =
   | { type: 'storeStatus'; status: StoreStatus }
   | { type: 'storeMessage'; message: string | null }
   | { type: 'paywall'; back: Screen; topic?: string | null }
-  | { type: 'trial'; topic: string | null };
+  | { type: 'trial'; topic: string | null }
+  | { type: 'custom'; packs: CustomPack[] }
+  | { type: 'editPack'; id: string | null };
 
 function reducer(s: AppState, a: Action): AppState {
   switch (a.type) {
@@ -133,6 +142,8 @@ function reducer(s: AppState, a: Action): AppState {
     case 'storeMessage': return { ...s, storeMessage: a.message };
     case 'paywall': return { ...s, screen: 'paywall', paywallBack: a.back, paywallTopic: a.topic ?? null, storeMessage: null, menu: false, collOpen: false };
     case 'trial': return { ...s, trialTopic: a.topic };
+    case 'custom': return { ...s, custom: a.packs };
+    case 'editPack': return { ...s, editingPack: a.id, screen: 'packEdit', menu: false, collOpen: false };
     case 'roundWon': return { ...s, roundWinner: a.w, score: a.score, session: a.session, lastRound: a.session.rounds, screen: 'winner', winnerBurst: s.winnerBurst + 1, menu: false, collOpen: false };
   }
 }
@@ -173,6 +184,12 @@ export type Game = {
   buyProduct: (id: string) => void;
   restorePurchases: () => void;
   isUnlocked: (topic: Topic) => boolean;
+  /** Open the editor for a new pack, or the paywall when the free slot is taken. */
+  newPack: () => void;
+  editPack: (id: string) => void;
+  /** Save the editor's draft. Returns what is still missing, or null once saved. */
+  savePack: (title: string, itemsText: string) => string | null;
+  deletePack: (id: string) => void;
 };
 
 const Ctx = createContext<Game | null>(null);
@@ -206,7 +223,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [names, score, session, settings, owned, seen, recentTopics] = await Promise.all([
+      const [names, score, session, settings, owned, seen, recentTopics, custom] = await Promise.all([
         loadRaw<Pair<string>>(KEYS.names, ['', '']),
         loadRaw<Pair<number>>(KEYS.score, [0, 0]),
         load<Session>(KEYS.session, R.newSession()),
@@ -214,10 +231,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         loadRaw<string[]>(KEYS.owned, []),
         loadRaw<string[]>(KEYS.seen, []),
         loadRaw<string[]>(KEYS.recent, []),
+        loadRaw<unknown>(KEYS.custom, []),
       ]);
       if (!alive) return;
       dispatch({ type: 'owned', ids: owned, replace: true });
       dispatch({ type: 'history', seen, recentTopics });
+      dispatch({ type: 'custom', packs: validPacks(custom) });
       store.startStore({
         onOwned: (ids) => alive && dispatch({ type: 'owned', ids }),
         onProducts: (products) => alive && dispatch({ type: 'products', products }),
@@ -264,6 +283,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const api = useMemo<Omit<Game, 'state' | 'topic' | 'names' | 'rm'>>(() => {
     const go = (screen: Screen, back?: Screen) => dispatch({ type: 'go', screen, back });
+    const findTopic = (id: string) => findIn(stateRef.current.custom, id);
+    const setPacks = (packs: CustomPack[]) => {
+      stateRef.current = { ...stateRef.current, custom: packs };
+      save(KEYS.custom, packs);
+      dispatch({ type: 'custom', packs });
+    };
 
     const stopGoing = () => { if (goingTimer.current) { clearTimeout(goingTimer.current); goingTimer.current = null; } };
 
@@ -349,7 +374,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       },
       chooseTopic: (id) => {
         clearTimers();
-        const wanted = topicById(id);
+        const wanted = findTopic(id);
         if (!topicUnlocked(wanted, stateRef.current.owned) && stateRef.current.trialTopic !== id) {
           haptic('nav');
           dispatch({ type: 'paywall', back: stateRef.current.screen, topic: id });
@@ -361,7 +386,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       startRound: () => {
         clearTimers();
         const s = stateRef.current;
-        const topic = topicById(s.topicId);
+        const topic = findTopic(s.topicId);
         const picked = pickItems(topic.items, R.ITEMS, s.seen);
         const items = picked.items;
         const recentTopics = remember(s.recentTopics, topic.id);
@@ -424,6 +449,33 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       buyProduct: (id) => { haptic('lock'); store.buy(id); },
       restorePurchases: () => { store.restore(); },
       isUnlocked: (t) => topicUnlocked(t, stateRef.current.owned),
+      newPack: () => {
+        const s = stateRef.current;
+        if (!canAddCustomPack(s.owned, s.custom.length)) { haptic('nav'); dispatch({ type: 'paywall', back: s.screen }); return; }
+        dispatch({ type: 'editPack', id: null });
+      },
+      editPack: (id) => dispatch({ type: 'editPack', id }),
+      savePack: (title, itemsText) => {
+        const s = stateRef.current;
+        const items = cleanItems(itemsText);
+        const problem = packProblem(title, items);
+        if (problem) return problem;
+        const old = s.custom.find((p) => p.id === s.editingPack);
+        // Re-check the limit here too: a Pro refund between opening and saving must not add a pack.
+        if (!old && !canAddCustomPack(s.owned, s.custom.length)) { dispatch({ type: 'paywall', back: 'packs' }); return 'Pro needed'; }
+        const pack: CustomPack = old
+          ? { ...old, title: cleanTitle(title), items }
+          : { id: newPackId(), title: cleanTitle(title), items, accent: accentFor(s.custom.length) };
+        setPacks(old ? s.custom.map((p) => (p.id === old.id ? pack : p)) : [...s.custom, pack]);
+        haptic('lock');
+        go('packs');
+        return null;
+      },
+      deletePack: (id) => {
+        setPacks(stateRef.current.custom.filter((p) => p.id !== id));
+        haptic('adjust');
+        go('packs');
+      },
       quitRound: () => { clearTimers(); dispatch({ type: 'round', round: null }); go('home', 'home'); },
       finishRound: () => { maybeShowInterstitial().then(() => go('awards')); },
       watchAdForTopic: () => {
@@ -440,10 +492,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [later, clearTimers, setRound]);
 
   const names: Pair<string> = [state.names[0].trim() || 'Player 1', state.names[1].trim() || 'Player 2'];
-  const topic = topicById(state.topicId);
+  const topic = findIn(state.custom, state.topicId);
   const value = useMemo<Game>(() => ({ ...api, state, topic, names, rm }), [api, state, topic, names[0], names[1], rm]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+/** A custom pack by id, else the catalog pack (topicById falls back to the first pack). */
+function findIn(custom: readonly CustomPack[], id: string): Topic {
+  const c = custom.find((p) => p.id === id);
+  return c ? customTopic(c) : topicById(id);
 }
 
 export function useGame(): Game {

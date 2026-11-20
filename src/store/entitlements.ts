@@ -1,4 +1,5 @@
 import { CATALOG } from '../content/catalog.ts';
+import { CUSTOM_CATEGORY } from '../content/custom.ts';
 
 /** The only Topic fields entitlements need. */
 type HasCategory = { id: string; categoryId: string };
@@ -30,8 +31,17 @@ export const ownsPro = (owned: Owned) => owned.includes(PRO_ID);
 const legacyOwnsPack = (owned: Owned, packId: string) =>
   Object.entries(LEGACY_GROUP_PACKS).some(([g, packs]) => packs.includes(packId) && owned.includes(groupProductId(g)));
 
-/** A pack is playable if its category is free, the player has Pro, or an old group pack covered it. */
+/** Custom packs everyone can keep; Pro has no limit. */
+export const FREE_CUSTOM_PACKS = 1;
+export const customPackLimit = (owned: Owned) => (ownsPro(owned) ? Infinity : FREE_CUSTOM_PACKS);
+export const canAddCustomPack = (owned: Owned, count: number) => count < customPackLimit(owned);
+
+/**
+ * A pack is playable if its category is free, the player has Pro, or an old group pack covered it.
+ * Custom packs always play: the limit applies to making them, so a refunded Pro never locks a saved pack.
+ */
 export function topicUnlocked(t: HasCategory, owned: Owned): boolean {
+  if (t.categoryId === CUSTOM_CATEGORY) return true;
   const cat = CATALOG.find((c) => c.id === t.categoryId);
   if (!cat) return false;
   return cat.free || ownsPro(owned) || legacyOwnsPack(owned, t.id);
