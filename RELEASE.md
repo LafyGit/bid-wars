@@ -44,7 +44,7 @@ Lafy's phone runs the iOS 27 beta, which traps at launch unless the app adopts U
 
 - 1.0.2 (19): uploaded 2026-11-07, TestFlight only. Purchases reported to RevenueCat (`src/store/revenuecat.ts`, project 29c53d28); expo-iap still makes and finishes them. Apple's rating sheet on the winner screen after a session's second round (`expo-store-review`). New native module: it needs a new binary, and importing it on a 1.0.1 binary would crash, so the version bump keeps live updates away from older builds.
 
-Live updates (from 1.0.1 on): JS-only changes ship with `npx eas-cli update --channel production --message "..."` (EAS project @lafyexpo/bid-wars). Runtime version = app version, so an update only reaches builds with the same `expo.version`; bump the version and ship a new binary for native changes.
+Live updates (from 1.0.1 on): JS-only changes ship with `npx eas-cli update --channel production --message "..."` (EAS project @lafyexpo/bid-wars). Never run it with `EXPO_PUBLIC_ANTHROPIC_API_KEY` set in the shell or `.env`: the key would ship to every phone. Checked 2026-11-21: the 1.0.2 (21) and 1.0.3 (22) archives and the latest update bundle contain no key, so the live app uses the built-in judge. `ship.sh` now refuses to archive with the key set and stops before upload if one is in the bundle. Runtime version = app version, so an update only reaches builds with the same `expo.version`; bump the version and ship a new binary for native changes.
 
 `react-native-purchases` is pinned to 10.16.0 on purpose: RevenueCat stopped publishing `PurchasesHybridCommon` to CocoaPods after 19.17.0, so 11.x fails `pod install` here. Its SwiftPM route needs React Native 0.88+.
 
