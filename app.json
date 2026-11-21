@@ -2,7 +2,7 @@
   "expo": {
     "name": "Outbid",
     "slug": "bid-wars",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -20,7 +20,7 @@
         "UIViewControllerBasedStatusBarAppearance": false
       },
       "appleTeamId": "CN8378NUAA",
-      "buildNumber": "22",
+      "buildNumber": "23",
       "config": {
         "usesNonExemptEncryption": false
       }
