@@ -5,28 +5,26 @@ import { Display } from './Txt';
 
 /**
  * Archivo Expanded Black metrics (fontTools, em): ink widths at -0.045em tracking, and the left
- * side bearings of O and B. BID is set larger so both lines end at the same width: one solid block.
+ * side bearings of O and B. Both lines share one size; OUT, the wider word, sets the block width.
  */
 const LS = -0.045;
 const OUT_INK = 2.806 + 2 * LS;
-const BID_INK = 2.139 + 2 * LS;
 const O_LSB = 0.045;
 const B_LSB = 0.074;
 
 /** Sizes for the lockup at a given OUT size, so the splash can animate the same lines. */
 export function wordmark(size: number) {
-  const big = Math.round(size * (OUT_INK / BID_INK));
   return {
     width: Math.round(size * OUT_INK),
     // Each line's box is wider than its ink (advance, trailing tracking pad), so give it room past the block edge.
     out: { size, ls: LS, lh: 0.84, style: { marginLeft: -Math.round(size * O_LSB), width: Math.ceil(size * 3.2) } },
     // Pull BID up into OUT's empty descender space; each line keeps its own unclipped box.
-    bid: { size: big, ls: LS, lh: 0.84, style: { marginLeft: -Math.round(big * B_LSB), marginTop: -Math.round(size * 0.2), width: Math.ceil(big * 2.6) } },
+    bid: { size, ls: LS, lh: 0.84, style: { marginLeft: -Math.round(size * B_LSB), marginTop: -Math.round(size * 0.2), width: Math.ceil(size * 2.6) } },
     bar: { height: Math.max(5, Math.round(size * 0.08)), marginTop: Math.round(size * 0.12) },
   };
 }
 
-/** OUT over BID, the same width, optionally with the two-player bar under it. `size` is the OUT line. */
+/** OUT over BID at the same size, optionally with the two-player bar under it. `size` is the OUT line. */
 export function Wordmark({ size, bar = false, style }: { size: number; bar?: boolean; style?: StyleProp<ViewStyle> }) {
   const w = wordmark(size);
   return (

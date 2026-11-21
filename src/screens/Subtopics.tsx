@@ -24,7 +24,7 @@ export function Subtopics() {
   return (
     <Screen padX={false} padBottom={false}>
       <View style={{ paddingHorizontal: layout.padX }}>
-        <TextLink label="← TOPICS" onPress={() => g.go('topics')} />
+        <TextLink label="← TOPICS" onPress={g.back} />
         <Mono color={c.accent} style={{ marginTop: 10 }}>{c.title}</Mono>
         <Display size={34} lh={0.92} style={{ marginTop: 4 }}>PICK A LANE</Display>
       </View>

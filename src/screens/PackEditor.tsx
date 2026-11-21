@@ -25,7 +25,7 @@ export function PackEditor() {
     <Screen padX={false} padBottom={false}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={{ paddingHorizontal: layout.padX }}>
-          <TextLink label="← BACK" onPress={() => g.go('packs')} />
+          <TextLink label="← BACK" onPress={g.back} />
           <Display size={34} lh={0.92} style={{ marginTop: 6 }}>{editing ? 'EDIT PACK' : 'NEW PACK'}</Display>
         </View>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: layout.padX, paddingTop: 16, paddingBottom: 16, gap: 8 }} showsVerticalScrollIndicator={false}>

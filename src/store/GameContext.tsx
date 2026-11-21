@@ -5,7 +5,6 @@ import { accentFor, cleanItems, cleanTitle, customTopic, newPackId, packProblem,
 import * as R from '../game/round';
 import type { Pair, Player, RoundState, Session, Settings } from '../game/types';
 import { haptic, setHapticsEnabled } from '../fx/haptics';
-import { initSound, setSoundEnabled, sfx } from '../fx/sound';
 import { KEYS, load, loadRaw, save } from './storage';
 import { canAddCustomPack, playableTopics, topicUnlocked } from './entitlements';
 import { pickItems, pickTopicId, remember } from '../game/pick';
@@ -56,7 +55,7 @@ export type AppState = {
   editingPack: string | null;
 };
 
-const DEFAULT_SETTINGS: Settings = { sound: true, haptics: true, reducedMotion: false, threeSecondRule: false, aiJudge: true };
+const DEFAULT_SETTINGS: Settings = { haptics: true, reducedMotion: false, threeSecondRule: false, aiJudge: true };
 
 const initial: AppState = {
   hydrated: false,
@@ -155,11 +154,12 @@ export type Game = {
   names: Pair<string>;
   rm: boolean;
   go: (screen: Screen, back?: Screen) => void;
+  /** Where each screen's ← BACK link goes (the swipe-back gesture uses it too). */
+  back: () => void;
   play: () => void;
   openSetup: () => void;
   setDraft: (i: Player, v: string) => void;
   setupDone: () => void;
-  toggleSound: () => void;
   setSetting: (k: keyof Settings, v: boolean) => void;
   resetScore: () => void;
   openCategory: (id: string) => void;
@@ -244,8 +244,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         onMessage: (message) => alive && dispatch({ type: 'storeMessage', message }),
       });
       setHapticsEnabled(settings.haptics);
-      setSoundEnabled(settings.sound);
-      initSound();
       dispatch({ type: 'hydrate', names, score, session, settings });
     })();
     AccessibilityInfo.isReduceMotionEnabled().then((on) => alive && dispatch({ type: 'osReducedMotion', on })).catch(() => {});
@@ -292,10 +290,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     const stopGoing = () => { if (goingTimer.current) { clearTimeout(goingTimer.current); goingTimer.current = null; } };
 
-    /** After an item resolves: sound, haptic, then the verdict beat. */
+    /** After an item resolves: haptic, then the verdict beat. */
     const afterResolve = (r: RoundState) => {
       stopGoing();
-      sfx('win'); haptic('win');
+      haptic('win');
       later(() => setRound(R.showVerdict), VERDICT_DELAY);
     };
 
@@ -309,7 +307,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const nr = setRound(R.goingTick);
         if (!nr) return;
         if (nr.phase === 'result') { afterResolve(nr); return; }
-        sfx('countdown_tick'); haptic('tick');
+        haptic('tick');
         goingTimer.current = setTimeout(tick, GOING_TICK);
       };
       goingTimer.current = setTimeout(tick, GOING_TICK);
@@ -317,6 +315,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     return {
       go,
+      back: () => {
+        const s = stateRef.current;
+        switch (s.screen) {
+          case 'howto': case 'setup': case 'browser': return go('home');
+          case 'topics': return api.openSetup();
+          case 'subtopics': case 'packs': return go('topics');
+          case 'packEdit': return go('packs');
+          case 'paywall': return go(s.paywallBack === 'paywall' ? 'topics' : s.paywallBack);
+          case 'settings': return go(s.back === 'auction' && s.round ? 'auction' : 'home');
+        }
+      },
       play: () => { dispatch({ type: 'draftReset' }); go('setup'); },
       openSetup: () => { dispatch({ type: 'draftReset' }); go('setup'); },
       setDraft: (i, v) => dispatch({ type: 'draft', i, value: v.slice(0, 12) }),
@@ -327,12 +336,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         dispatch({ type: 'names', names });
         go('topics');
       },
-      toggleSound: () => api.setSetting('sound', !stateRef.current.settings.sound),
       setSetting: (k, v) => {
         const settings = { ...stateRef.current.settings, [k]: v };
         save(KEYS.settings, settings);
         if (k === 'haptics') setHapticsEnabled(v);
-        if (k === 'sound') setSoundEnabled(v);
         dispatch({ type: 'setting', key: k, value: v });
       },
       resetScore: () => {
@@ -350,7 +357,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const poolIdx = pool.map((t) => TOPICS.indexOf(t));
         if (rmRef.current) {
           dispatch({ type: 'spin', topicId: target.id, idx: targetIdx, landed: true });
-          sfx('topic_land'); haptic('land');
+          haptic('land');
           return;
         }
         // A shuffled strip of categories ending on the target; the reveal screen scrolls it like a slot reel.
@@ -370,7 +377,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         if (s.reveal.landed) return;
         const idx = TOPICS.findIndex((t) => t.id === s.topicId);
         dispatch({ type: 'spinTick', idx, landed: true });
-        sfx('topic_land'); haptic('land');
+        haptic('land');
       },
       chooseTopic: (id) => {
         clearTimers();
@@ -381,8 +388,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           return;
         }
         dispatch({ type: 'spin', topicId: id, idx: TOPICS.findIndex((t) => t.id === id), landed: true });
-        sfx('reveal');
-      },
+              },
       startRound: () => {
         clearTimers();
         const s = stateRef.current;
@@ -400,7 +406,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const r = stateRef.current.round;
         if (!r || r.phase !== 'hidden') return;
         setRound(R.revealItem);
-        sfx('reveal'); haptic('reveal');
+        haptic('reveal');
       },
       startBidding: () => {
         haptic('nav');
@@ -412,7 +418,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         if (!before || !R.canBid(before, p)) return;
         const nr = setRound((r) => R.placeBid(r, p, amount));
         if (!nr || nr === before) return;
-        sfx(p === 0 ? 'bid_p1' : 'bid_p2'); haptic('lock');
+        haptic('lock');
         if (nr.phase === 'result') afterResolve(nr);
         else armGoing();
       },
@@ -421,7 +427,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         if (!before || before.phase !== 'auction' || before.turn !== p) return;
         const nr = setRound((r) => R.pass(r, p));
         if (!nr || nr === before) return;
-        sfx('pass'); haptic('adjust');
+        haptic('adjust');
         if (nr.phase === 'result') afterResolve(nr);
         else stopGoing();
       },
@@ -429,7 +435,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const r = stateRef.current.round;
         if (!r) return;
         if (R.isLastItem(r)) {
-          sfx('final_result'); haptic('final');
+          haptic('final');
           go('final');
           return;
         }
@@ -441,7 +447,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const { score, session } = R.chooseWinner(s.round, s.score, s.session, w);
         save(KEYS.score, score); save(KEYS.session, session);
         dispatch({ type: 'roundWon', w, score, session });
-        sfx('final_result'); haptic('final');
+        haptic('final');
       },
       toggleColl: () => dispatch({ type: 'coll', open: !stateRef.current.collOpen }),
       toggleMenu: () => dispatch({ type: 'menu', open: !stateRef.current.menu }),

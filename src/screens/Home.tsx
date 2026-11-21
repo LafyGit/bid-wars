@@ -30,8 +30,7 @@ export function Home() {
   const hasScore = g.state.score[0] + g.state.score[1] > 0;
   return (
     <Screen>
-      <Row justify="space-between">
-        <Chip label={g.state.settings.sound ? 'SOUND ON' : 'SOUND OFF'} onPress={g.toggleSound} accessibilityLabel={g.state.settings.sound ? 'Sound on. Tap to mute' : 'Sound off. Tap to unmute'} />
+      <Row justify="flex-end">
         <Chip label="SETTINGS" onPress={() => g.go('settings', 'home')} />
       </Row>
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>

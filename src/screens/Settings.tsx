@@ -26,12 +26,11 @@ export function Settings() {
   const scoreText = `${n1} ${g.state.score[0]} – ${g.state.score[1]} ${n2}`;
   return (
     <Screen>
-      <TextLink label="← BACK" onPress={() => g.go(g.state.back === 'auction' && g.state.round ? 'auction' : 'home')} />
+      <TextLink label="← BACK" onPress={g.back} />
       <Display size={36} style={{ marginTop: 10 }}>SETTINGS</Display>
       <ScrollView style={{ flex: 1, marginTop: 18 }} contentContainerStyle={{ gap: 8, paddingBottom: 8 }} showsVerticalScrollIndicator={false}>
         <ToggleRow label="3-second rule" sub="Going once, going twice, sold. Raise within 3 seconds or lose it" value={s.threeSecondRule} onChange={(v) => g.setSetting('threeSecondRule', v)} />
         <ToggleRow label="Judge's verdict" sub={judgeAvailable() ? 'Claude weighs in on the final collections' : 'A quick opinion on who built the better collection'} value={s.aiJudge} onChange={(v) => g.setSetting('aiJudge', v)} />
-        <ToggleRow label="Sound" sub="Reveal, bid, going-once and win cues" value={s.sound} onChange={(v) => g.setSetting('sound', v)} />
         <ToggleRow label="Haptics" sub="Subtle taps on bids, passes and wins" value={s.haptics} onChange={(v) => g.setSetting('haptics', v)} />
         <ToggleRow label="Reduced motion" sub="Skips flips, bursts and the topic spin" value={s.reducedMotion} onChange={(v) => g.setSetting('reducedMotion', v)} />
         <RowBtn label="Outbid Pro" right={ownsPro(g.state.owned) ? 'Unlocked ✓' : 'No ads, bonus packs →'} onPress={() => g.openPaywall()} />

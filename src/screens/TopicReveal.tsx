@@ -4,7 +4,6 @@ import Animated, { Easing, FadeIn, Keyframe, interpolate, useAnimatedReaction, u
 import { scheduleOnRN } from 'react-native-worklets';
 import { TOPICS } from '../content/topics';
 import { haptic } from '../fx/haptics';
-import { sfx } from '../fx/sound';
 import { useGame } from '../store/GameContext';
 import { colors, tint } from '../theme/tokens';
 import { CTA, TextLink } from '../ui/Btn';
@@ -50,7 +49,7 @@ function Reel({ reel, spin, landed, accent, onLand }: { reel: string[]; spin: bo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const tick = () => { sfx('topic_spin_tick'); haptic('adjust'); };
+  const tick = () => { haptic('adjust'); };
   useAnimatedReaction(
     () => Math.round(-y.value / ROW_H),
     (cur, prev) => {

@@ -1,10 +1,11 @@
-import React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { CUSTOM_ACCENT } from '../content/custom';
-import { GROUPS, type Category } from '../content/topics';
+import { GROUPS, TOPICS, type Category, type Topic } from '../content/topics';
+import { searchTopics } from '../game/search';
 import { categoryUnlocked } from '../store/entitlements';
 import { useGame } from '../store/GameContext';
-import { colors, layout, withAlpha } from '../theme/tokens';
+import { colors, fonts, layout, withAlpha } from '../theme/tokens';
 import { TextLink } from '../ui/Btn';
 import { Enter } from '../ui/Motion';
 import { Screen, useScreenInsets } from '../ui/Screen';
@@ -34,19 +35,66 @@ function CategoryTile({ c, delay }: { c: Category; delay: number }) {
   );
 }
 
+/** One search hit: the pack, its category, and PLAY or PRO. Tapping it plays (or opens the paywall when locked). */
+function ResultRow({ t }: { t: Topic }) {
+  const g = useGame();
+  const open = g.isUnlocked(t);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${t.title}, ${t.categoryTitle}. ${t.subtitle}${open ? '' : '. Pro pack'}`}
+      onPress={() => g.chooseTopic(t.id)}
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: 20, backgroundColor: pressed ? colors.surfaceHover : colors.surface })}
+    >
+      <View style={{ width: 10, height: 44, borderRadius: 5, backgroundColor: t.accent }} />
+      <View style={{ flex: 1 }}>
+        <Mono size={9} color={t.accent} ls={0.12}>{t.categoryTitle}</Mono>
+        <FitText text={t.title} size={18} minSize={12} maxLines={2} wdth={112} upper={false} ls={0} lh={1.1} />
+        <Body size={12} color={colors.ink4} lh={1.3}>{t.subtitle}</Body>
+      </View>
+      <Mono size={10} ls={0.1} lh={1.5} align="right" color={open ? undefined : colors.p1}>{open ? 'PLAY →' : 'PRO'}</Mono>
+    </Pressable>
+  );
+}
+
 /** Pick a battle: Random up top, then every category on one page, sectioned by group. */
 export function Topics() {
   const g = useGame();
   const p = useScreenInsets();
   const packs = g.state.custom.length;
+  const [query, setQuery] = useState('');
+  const results = query.trim() ? searchTopics(TOPICS, query) : null;
   let n = 0;
   return (
     <Screen padX={false} padBottom={false}>
       <View style={{ paddingHorizontal: layout.padX }}>
-        <TextLink label="← PLAYERS" onPress={g.openSetup} />
+        <TextLink label="← PLAYERS" onPress={g.back} />
         <Display size={36} style={{ marginTop: 10 }}>{'CHOOSE YOUR\nBATTLE'}</Display>
+        <View style={{ marginTop: 14, flexDirection: 'row', alignItems: 'center', height: 48, borderRadius: 16, backgroundColor: colors.surface, paddingLeft: 14 }}>
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search packs"
+            placeholderTextColor={colors.ink5}
+            autoCorrect={false}
+            autoCapitalize="none"
+            returnKeyType="search"
+            clearButtonMode="never"
+            maxLength={40}
+            accessibilityLabel="Search packs"
+            style={{ flex: 1, height: 48, color: colors.ink, fontFamily: fonts.semiBold, fontSize: 16 }}
+          />
+          {!!query && <Pressable accessibilityRole="button" accessibilityLabel="Clear search" hitSlop={8} onPress={() => setQuery('')} style={{ paddingHorizontal: 14, height: 48, justifyContent: 'center' }}><Mono size={10} ls={0.12}>CLEAR</Mono></Pressable>}
+        </View>
       </View>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: layout.padX, paddingTop: 20, paddingBottom: p.bottom }} showsVerticalScrollIndicator={false}>
+      <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingHorizontal: layout.padX, paddingTop: 20, paddingBottom: p.bottom }} showsVerticalScrollIndicator={false}>
+        {results ? (
+          <View style={{ gap: 8 }}>
+            <Mono color={colors.ink3} accessibilityLiveRegion="polite">{results.length ? `${results.length}${results.length === 40 ? '+' : ''} PACK${results.length === 1 ? '' : 'S'}` : 'NO PACKS MATCH'}</Mono>
+            {results.map((t) => <ResultRow key={t.id} t={t} />)}
+            {!results.length && <Body size={14} color={colors.ink3}>Try a game, show, team or vibe. Or make it yourself in Your Packs.</Body>}
+          </View>
+        ) : (<>
         <Enter kind="in" duration={360}>
           <Pressable
             accessibilityRole="button"
@@ -85,6 +133,7 @@ export function Topics() {
             </View>
           </View>
         ))}
+        </>)}
       </ScrollView>
     </Screen>
   );
