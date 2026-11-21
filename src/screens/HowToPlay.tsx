@@ -19,7 +19,7 @@ export function HowToPlay() {
   const g = useGame();
   return (
     <Screen>
-      <TextLink label="← BACK" onPress={() => g.go('home')} />
+      <TextLink label="← BACK" onPress={g.back} />
       <Display size={40} style={{ marginTop: 14 }}>{'HOW TO\nPLAY'}</Display>
       <View style={{ flex: 1, justifyContent: 'center', gap: 10 }}>
         {RULES.map(([title, body], i) => (

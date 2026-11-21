@@ -17,7 +17,7 @@ export function Browser() {
   return (
     <Screen padX={false} padBottom={false}>
       <View style={{ paddingHorizontal: layout.padX }}>
-        <TextLink label="← BACK" onPress={() => g.go('home')} />
+        <TextLink label="← BACK" onPress={g.back} />
         <Display size={36} style={{ marginTop: 10 }}>TOPIC PACKS</Display>
         <Body size={14} color={colors.ink3} style={{ marginTop: 8 }}>Items stay secret until they're up for auction.</Body>
       </View>

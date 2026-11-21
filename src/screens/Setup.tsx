@@ -54,7 +54,7 @@ export function Setup() {
   return (
     <Screen>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <TextLink label="← BACK" onPress={() => g.go('home')} />
+        <TextLink label="← BACK" onPress={g.back} />
         {/* The title steps aside while the keyboard is up; otherwise the cards would slide over it. */}
         {!keyboardUp && <Display size={40} style={{ marginTop: 14 }}>{'WHO’S\nPLAYING?'}</Display>}
         <View style={{ flex: 1, justifyContent: 'center', paddingTop: 12 }}>

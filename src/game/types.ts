@@ -63,7 +63,6 @@ export type Session = {
 };
 
 export type Settings = {
-  sound: boolean;
   haptics: boolean;
   reducedMotion: boolean;
   /** Going once, going twice, sold: the other player has 3 seconds to raise. */

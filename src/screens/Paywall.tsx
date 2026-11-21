@@ -28,7 +28,7 @@ function Perk({ title, body, delay }: { title: string; body: string; delay: numb
 export function Paywall() {
   const g = useGame();
   const p = useScreenInsets();
-  const { owned, products, storeStatus, storeMessage, paywallBack } = g.state;
+  const { owned, products, storeStatus, storeMessage } = g.state;
   const pro = ownsPro(owned);
   const price = products[PRO_ID]?.price;
   const available = storeStatus === 'ready' && !!price;
@@ -43,7 +43,7 @@ export function Paywall() {
   return (
     <Screen padX={false} padBottom={false}>
       <View style={{ paddingHorizontal: layout.padX }}>
-        <TextLink label="← BACK" onPress={() => g.go(paywallBack === 'paywall' ? 'topics' : paywallBack)} />
+        <TextLink label="← BACK" onPress={g.back} />
         <Mono color={PRO} style={{ marginTop: 12 }}>ONE-TIME PURCHASE</Mono>
         <Display size={40} lh={1} style={{ marginTop: 6 }}>{'OUTBID\nPRO'}</Display>
       </View>

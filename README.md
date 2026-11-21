@@ -41,7 +41,6 @@ src/ui/                     Txt (Display / Mono / Body), Btn, Motion (Reanimated
 src/screens/                One file per screen; src/screens/auction/ holds the auction phases
 src/fx/                     Haptics and the audio event bus
 assets/fonts/               Archivo static instances (cut from the variable font) + IBM Plex Mono
-assets/sfx/                 Placeholder low-gain tones (swap for real cues later)
 ```
 
 ## Design notes
