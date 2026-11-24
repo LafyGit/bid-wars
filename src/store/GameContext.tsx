@@ -6,7 +6,7 @@ import * as R from '../game/round';
 import type { Pair, Player, RoundState, Session, Settings } from '../game/types';
 import { haptic, setHapticsEnabled } from '../fx/haptics';
 import { KEYS, load, loadRaw, save } from './storage';
-import { canAddCustomPack, playableTopics, topicUnlocked } from './entitlements';
+import { canAddCustomPack, playableTopics, showsAds, topicUnlocked } from './entitlements';
 import { pickItems, pickTopicId, remember } from '../game/pick';
 import * as store from './purchases';
 import { initAds, maybeShowInterstitial, setAdsAllowed, showRewarded } from '../ads/ads';
@@ -49,6 +49,8 @@ export type AppState = {
   paywallTopic: string | null;
   /** Topic unlocked for this sitting by watching a rewarded ad. */
   trialTopic: string | null;
+  /** An interstitial ran on the way to the awards screen, which then offers ad-free Pro. */
+  adBreak: boolean;
   /** Packs the players made, newest last. */
   custom: CustomPack[];
   /** Pack open in the editor; null while making a new one. */
@@ -86,6 +88,7 @@ const initial: AppState = {
   paywallBack: 'topics',
   paywallTopic: null,
   trialTopic: null,
+  adBreak: false,
   custom: [],
   editingPack: null,
 };
@@ -114,6 +117,7 @@ type Action =
   | { type: 'storeMessage'; message: string | null }
   | { type: 'paywall'; back: Screen; topic?: string | null }
   | { type: 'trial'; topic: string | null }
+  | { type: 'adBreak'; shown: boolean }
   | { type: 'custom'; packs: CustomPack[] }
   | { type: 'editPack'; id: string | null };
 
@@ -141,6 +145,7 @@ function reducer(s: AppState, a: Action): AppState {
     case 'storeMessage': return { ...s, storeMessage: a.message };
     case 'paywall': return { ...s, screen: 'paywall', paywallBack: a.back, paywallTopic: a.topic ?? null, storeMessage: null, menu: false, collOpen: false };
     case 'trial': return { ...s, trialTopic: a.topic };
+    case 'adBreak': return { ...s, adBreak: a.shown };
     case 'custom': return { ...s, custom: a.packs };
     case 'editPack': return { ...s, editingPack: a.id, screen: 'packEdit', menu: false, collOpen: false };
     case 'roundWon': return { ...s, roundWinner: a.w, score: a.score, session: a.session, lastRound: a.session.rounds, screen: 'winner', winnerBurst: s.winnerBurst + 1, menu: false, collOpen: false };
@@ -253,10 +258,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [clearTimers]);
 
   // Any purchase turns ads off. Ads start a moment after launch so the consent and tracking prompts never block the splash.
-  useEffect(() => { setAdsAllowed(state.owned.length === 0); }, [state.owned]);
+  useEffect(() => { setAdsAllowed(showsAds(state.owned)); }, [state.owned]);
   useEffect(() => {
     // Players who bought anything never see ads, so they never get the consent or tracking prompts either.
-    if (!state.hydrated || state.owned.length > 0) return;
+    if (!state.hydrated || !showsAds(state.owned)) return;
     const t = setTimeout(() => { initAds(); }, 2500);
     return () => clearTimeout(t);
   }, [state.hydrated, state.owned.length]);
@@ -483,7 +488,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         go('packs');
       },
       quitRound: () => { clearTimers(); dispatch({ type: 'round', round: null }); go('home', 'home'); },
-      finishRound: () => { maybeShowInterstitial().then(() => go('awards')); },
+      finishRound: () => { maybeShowInterstitial().then((shown) => { dispatch({ type: 'adBreak', shown }); go('awards'); }); },
       watchAdForTopic: () => {
         const id = stateRef.current.paywallTopic;
         if (!id) return;

@@ -64,7 +64,8 @@ export function ShareCard({ cardRef }: { cardRef: React.RefObject<View | null> }
       </Row>
       <Row justify="space-between" style={{ marginTop: 10 }}>
         <Mono size={9} color={colors.ink4} ls={0.14}>MATCH {g.state.score[0]}–{g.state.score[1]}</Mono>
-        <Mono size={9} color={colors.ink4} ls={0.14}>TWO PLAYERS · ONE PHONE</Mono>
+        {/* The image often travels without the text, so the card itself says where to get the game. */}
+        <View style={{ flex: 1, marginLeft: 10 }}><FitText kind="mono" text="THE $20 DRAFT · ON THE APP STORE" size={9} minSize={7} color={colors.ink4} ls={0.14} align="right" /></View>
       </Row>
     </View>
   );
