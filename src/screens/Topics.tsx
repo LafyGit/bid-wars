@@ -19,7 +19,7 @@ function CategoryTile({ c, delay }: { c: Category; delay: number }) {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${c.title}. ${c.subtitle}${open ? '' : '. Pro pack'}`}
-        onPress={() => (open ? g.openCategory(c.id) : g.openPaywall())}
+        onPress={() => g.openCategory(c.id)}
         style={({ pressed }) => ({ flexGrow: 1, minHeight: 118, borderRadius: 20, backgroundColor: pressed ? colors.surfaceHover : colors.surface, padding: 14, justifyContent: 'space-between', gap: 10, overflow: 'hidden', transform: [{ scale: pressed ? 0.97 : 1 }] })}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

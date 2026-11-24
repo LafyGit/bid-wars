@@ -77,20 +77,20 @@ export function setAdsAllowed(value: boolean) {
 
 export function rewardedAvailable() { return allowed && rewardedReady; }
 
-/** Called at the natural break after a round. Resolves when the ad closes, or at once if none is shown. */
-export function maybeShowInterstitial(): Promise<void> {
+/** Called at the natural break after a round. Resolves when the ad closes (true), or at once if none is shown (false). */
+export function maybeShowInterstitial(): Promise<boolean> {
   roundsSeen += 1;
   const now = Date.now();
   if (!allowed || !interstitialReady || !interstitial || roundsSeen <= FREE_ROUNDS_BEFORE_ADS || now - lastShownAt < MIN_SECONDS_BETWEEN_INTERSTITIALS * 1000) {
-    return Promise.resolve();
+    return Promise.resolve(false);
   }
   const ad = interstitial;
   return new Promise((resolve) => {
     let done = false;
-    const finish = () => { if (done) return; done = true; lastShownAt = Date.now(); loadInterstitial(); resolve(); };
-    ad.addAdEventListener(AdEventType.CLOSED, finish);
-    ad.addAdEventListener(AdEventType.ERROR, finish);
-    ad.show().catch(finish);
+    const finish = (shown: boolean) => { if (done) return; done = true; lastShownAt = Date.now(); loadInterstitial(); resolve(shown); };
+    ad.addAdEventListener(AdEventType.CLOSED, () => finish(true));
+    ad.addAdEventListener(AdEventType.ERROR, () => finish(false));
+    ad.show().catch(() => finish(false));
   });
 }
 

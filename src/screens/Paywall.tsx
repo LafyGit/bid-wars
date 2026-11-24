@@ -46,6 +46,7 @@ export function Paywall() {
         <TextLink label="← BACK" onPress={g.back} />
         <Mono color={PRO} style={{ marginTop: 12 }}>ONE-TIME PURCHASE</Mono>
         <Display size={40} lh={1} style={{ marginTop: 6 }}>{'OUTBID\nPRO'}</Display>
+        {!pro && trial && <Body size={14} color={colors.ink3} style={{ marginTop: 8 }}>{trial.title} is a Pro pack.</Body>}
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: layout.padX, paddingTop: 18, paddingBottom: p.bottom + 12, gap: 10 }} showsVerticalScrollIndicator={false}>
         <Perk title="No ads, ever" body="No breaks between rounds. Just the next auction." delay={40} />

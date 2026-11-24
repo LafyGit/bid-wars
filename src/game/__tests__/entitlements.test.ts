@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { categoryUnlocked, groupProductId, PRO_ID, ALL_PRODUCT_IDS, LEGACY_GROUP_PACKS, topicUnlocked } from '../../store/entitlements.ts';
+import { categoryUnlocked, groupProductId, PRO_ID, ALL_PRODUCT_IDS, LEGACY_GROUP_PACKS, offerAdFree, showsAds, topicUnlocked } from '../../store/entitlements.ts';
 import { CATALOG } from '../../content/catalog.ts';
 
 const packs = CATALOG.flatMap((c) => c.subtopics.map((s) => ({ id: s.id, categoryId: c.id, free: c.free })));
@@ -41,4 +41,14 @@ test('Pro unlocks everything', () => {
 test('product ids never change: Pro plus the five group packs on sale in 1.0.0', () => {
   assert.deepEqual(ALL_PRODUCT_IDS, [PRO_ID, ...['gaming', 'sports', 'entertainment', 'foodtravel', 'lifestyle'].map(groupProductId)]);
   for (const id of ALL_PRODUCT_IDS) assert.match(id, /^com\.lafyalmutlaq\.bidwars\.[a-z.]+$/);
+});
+
+test('any purchase turns ads off, and the ad-free offer only follows a real ad break for players who see ads', () => {
+  assert.equal(showsAds([]), true);
+  assert.equal(showsAds([PRO_ID]), false);
+  assert.equal(showsAds([groupProductId('sports')]), false);
+  assert.equal(offerAdFree(true, []), true);
+  assert.equal(offerAdFree(false, []), false);
+  assert.equal(offerAdFree(true, [PRO_ID]), false);
+  assert.equal(offerAdFree(true, [groupProductId('gaming')]), false);
 });

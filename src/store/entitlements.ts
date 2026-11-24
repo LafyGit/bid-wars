@@ -28,6 +28,12 @@ export type Owned = readonly string[];
 
 export const ownsPro = (owned: Owned) => owned.includes(PRO_ID);
 
+/** Any purchase, Pro or an old group pack, turns ads off. */
+export const showsAds = (owned: Owned) => owned.length === 0;
+
+/** Right after an ad break is when "no ads" means most; offer it only to players who still see ads. */
+export const offerAdFree = (adJustShown: boolean, owned: Owned) => adJustShown && showsAds(owned);
+
 const legacyOwnsPack = (owned: Owned, packId: string) =>
   Object.entries(LEGACY_GROUP_PACKS).some(([g, packs]) => packs.includes(packId) && owned.includes(groupProductId(g)));
 
